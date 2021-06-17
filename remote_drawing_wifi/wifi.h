@@ -1,5 +1,5 @@
-#ifndef WIFI_FUNCTIONS
-#define WIFI_FUNCTIONS
+#ifndef WIFI_H
+#define WIFI_H
 
 bool searchForNetwork(char target[]);
 void printEncryptionType(int thisType);

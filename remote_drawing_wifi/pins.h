@@ -1,5 +1,5 @@
-#ifndef PIN_H
-#define PIN_H
+#ifndef PINS_H
+#define PINS_H
 
 // Pin tied to its own reset pin
 #define RESET_PIN_SELF 6
