@@ -37,8 +37,6 @@ void setup() {
 
   downloadInitialData();
 
-  sendStatusMessage("Ready");
-
   Serial.println("Setup finished.");
   Serial.println("====================================================");
   digitalWrite(LED_BUILTIN, LOW);
@@ -71,8 +69,7 @@ void handleSerialReceive() {
 void handleRedisReceive() {
   char buf[REDIS_RECEIVE_BUFFER_SIZE];
   if (redisTryReceiveSub(buf)) {
-    Serial.print("REDIS: ");
-    Serial.println(buf);
+    Serial.print("Data received with Redis sub");
   }
 }
 
@@ -82,7 +79,8 @@ void downloadInitialData() {
 
   sendStatusMessage("Downloading drawing from server...");
   count = redisDownloadLinesBegin();
-  while(1);
+  
+  sendStatusMessageFormat("Downloading %d lines from server...", count);
   
   for (int i=0; i<count; i++) {
     // Receive line from Redis
@@ -91,7 +89,7 @@ void downloadInitialData() {
     serialTransmitLine(x0, y0, x1, y1);
   }
 
-  sendStatusMessage("Downloading drawing finished.");
+  sendStatusMessageFormat("Downloading drawing finished (%d lines).", count);
 }
 
 void loop() {

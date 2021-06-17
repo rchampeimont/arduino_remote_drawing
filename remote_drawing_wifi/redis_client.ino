@@ -46,92 +46,78 @@ void connectToRedisServer() {
 // Argument "command" is used only in the error message for diagnosis
 void expectRedisResponse(WiFiClient *client, const char *command, const char *expectedResponse) {
   char buf[REDIS_RECEIVE_BUFFER_SIZE];
-  if (! redisReceive(client, buf)) {
-    fatalError("Got no response from Redis for command %s", command);
-  } else {
-    if (strcmp(buf, expectedResponse) != 0) {
-      fatalError("Unexpected response for %s: \"%s\"", command, buf);
-    }
+  redisReceive(client, buf, command);
+  if (strcmp(buf, expectedResponse) != 0) {
+    fatalError("Unexpected response for %s: \"%s\"", command, buf);
   }
 }
 
 int expectRedisInteger(WiFiClient *client, const char *command) {
   char buf[REDIS_RECEIVE_BUFFER_SIZE];
-  if (! redisReceive(client, buf)) {
-    fatalError("Got no response from Redis for command %s", command);
-    return 0; // never reached, as fatalError() never returns
+  redisReceive(client, buf, command);
+  if (buf[0] == ':') {
+    return atoi(buf + 1);
   } else {
-    if (buf[0] == ':') {
-      return atoi(buf + 1);
-    } else {
-      fatalError("Expected integer for %s but got: \"%s\"", command, buf);
-      return 0; // never reached, as fatalError() never returns
-    }
+    fatalError("Expected integer for %s but got: \"%s\"", command, buf);
+    return 0; // never reached, as fatalError() never returns
   }
 }
 
 int expectRedisArrayCount(WiFiClient *client, const char *command) {
   char buf[REDIS_RECEIVE_BUFFER_SIZE];
-  if (! redisReceive(client, buf)) {
-    fatalError("Got no response from Redis for command %s", command);
-    return 0; // never reached, as fatalError() never returns
+  redisReceive(client, buf, command);
+  if (buf[0] == '*') {
+    return atoi(buf + 1);
   } else {
-    if (buf[0] == '*') {
-      return atoi(buf + 1);
-    } else {
-      fatalError("Expected array count for %s but got: \"%s\"", command, buf);
-      return 0; // never reached, as fatalError() never returns
-    }
+    fatalError("Expected array count for %s but got: \"%s\"", command, buf);
+    return 0; // never reached, as fatalError() never returns
   }
 }
 
 int expectRedisBulkStringLength(WiFiClient *client, const char *command) {
   char buf[REDIS_RECEIVE_BUFFER_SIZE];
-  if (! redisReceive(client, buf)) {
-    fatalError("Got no response from Redis for command %s", command);
-    return 0; // never reached, as fatalError() never returns
+  redisReceive(client, buf, command);
+  if (buf[0] == '$') {
+    return atoi(buf + 1);
   } else {
-    if (buf[0] == '$') {
-      return atoi(buf + 1);
-    } else {
-      fatalError("Expected bulk string length for %s but got: \"%s\"", command, buf);
-      return 0; // never reached, as fatalError() never returns
-    }
+    fatalError("Expected bulk string length for %s but got: \"%s\"", command, buf);
+    return 0; // never reached, as fatalError() never returns
   }
 }
 
-// Wait to receive Redis data until timeout (1 second by default)
-int redisReceive(WiFiClient *client, char buf[REDIS_RECEIVE_BUFFER_SIZE]) {
+// Receive data with Redis until newline is reached
+// Argument "command" is used only in the error message for diagnosis
+void redisReceive(WiFiClient *client, char buf[REDIS_RECEIVE_BUFFER_SIZE], const char *command) {
   size_t readChars = client->readBytesUntil('\n', buf, REDIS_RECEIVE_BUFFER_SIZE - 1);
   if (readChars >= REDIS_RECEIVE_BUFFER_SIZE - 1) {
     // The message is too big, so we need to discard it until we reach NUL
-    sendStatusMessageFormat("Received too big line from Redis server with size: %d", readChars);
-    return 0;
+    fatalError("Redis sent data that exceeded buffer size for %s", command);
   } else if (readChars > 0) {
     // LF is automatically discarded by readBytesUntil(), but there is also a CR to get rid of
     buf[readChars - 1] = '\0';
-    return 1;
   } else {
-    return 0;
+    fatalError("Redis did not give a response for %s", command);
   }
 }
 
 // Receive binary data with Redis with specified sized.
 // Typically used because Redis tells the same of data before sending it.
 void redisReceiveBinary(WiFiClient *client, char buf[REDIS_RECEIVE_BUFFER_SIZE], int length, const char *command) {
-  if (length > REDIS_RECEIVE_BUFFER_SIZE) {
+  // Redis sends the binary data followed by CRLF (so there are 2 extra bytes)
+  if (length + 2 > REDIS_RECEIVE_BUFFER_SIZE) {
     fatalError("Cannot receive Redis data of size %d which exceed buffer size", length);
   }
-  int readChars = client->readBytes(buf, length);
-  if (readChars != length) {
-    sendStatusMessageFormat("Received %d bytes instead of %d for command %s", readChars, length, command);
+  int readChars = client->readBytes(buf, length + 2);
+  if (readChars != length + 2) {
+    fatalError("Received %d bytes instead of %d for command %s", readChars, length, command);
   }
 }
 
 // Try to receive Redis data if there is any, but don't wait for it
 int redisTryReceiveSub(char buf[REDIS_RECEIVE_BUFFER_SIZE]) {
   if (! subClient.available()) return 0;
-  return redisReceive(&subClient, buf);
+  redisReceive(&subClient, buf, "subscription");
+  return 1;
 }
 
 // Execute the Redis LPUSH command.
@@ -151,13 +137,13 @@ int redisLPUSH(const char *key, byte buf[], int bufsize) {
 
 // Execute the Redis LRANGE command.
 // Returns the number of elements in the array
-// You should then read them with reduisReadArrayElement()
+// You should then read them with redisReadArrayElement()
 int redisLRANGE(const char *key, int start, int stop) {
   char startAsString[10];
   char stopAsString[10];
   snprintf(startAsString, 10, "%d", start);
   snprintf(stopAsString, 10, "%d", stop);
-  
+
   mainClient.write("*4\r\n");
   mainClient.write("$6\r\n");
   mainClient.write("LRANGE\r\n");
@@ -173,8 +159,7 @@ int redisLRANGE(const char *key, int start, int stop) {
 
 // Download one array element, for used after LRANGE for instance.
 // To call for each array element to read
-void reduisReadArrayElement(WiFiClient *client, const char *command) {
-  char buf[REDIS_RECEIVE_BUFFER_SIZE];
+void redisReadArrayElement(WiFiClient *client, char buf[REDIS_RECEIVE_BUFFER_SIZE], const char *command) {
   int dataLength = expectRedisBulkStringLength(client, command);
   redisReceiveBinary(client, buf, dataLength, command);
   Serial.print("Read array element of size ");
@@ -192,5 +177,12 @@ int redisDownloadLinesBegin() {
 
 // Goes with redisDownloadLinesBegin()
 void redisDownloadLine(int *x0, int *y0, int *x1, int *y1) {
-  reduisReadArrayElement(&mainClient, "LRANGE");
+  char buf[REDIS_RECEIVE_BUFFER_SIZE];
+
+  redisReadArrayElement(&mainClient, buf, "LRANGE");
+  
+  memcpy(x0, buf, 2);
+  memcpy(y0, buf+2, 2);
+  memcpy(x1, buf+4, 2);
+  memcpy(y1, buf+8, 2);
 }
