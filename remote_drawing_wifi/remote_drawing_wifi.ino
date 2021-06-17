@@ -9,6 +9,10 @@
 #include "redis_client.h"
 #include "pins.h"
 
+// Reboot every day to avoid issues linked with millis() overflow
+// and for safety if we get stuck in a bad state.
+#define REBOOT_EVERY_MS 86400000
+
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
@@ -73,4 +77,10 @@ void handleRedisReceive() {
 void loop() {
   handleSerialReceive();
   handleRedisReceive();
+
+  if (millis() > REBOOT_EVERY_MS) {
+    sendStatusMessage("It's time for the periodic reboot! Please wait a minute...");
+    delay(5000);
+    reboot();
+  }
 }
