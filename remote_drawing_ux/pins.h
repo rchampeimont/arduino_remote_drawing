@@ -11,6 +11,4 @@
 // Tie this pin to ground to force recalibration at start time
 #define FORCE_CALIBRATE_PIN 5
 
-#define WARNING_LED_PIN 7
-
 #endif

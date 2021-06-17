@@ -33,9 +33,6 @@ int lastAverageY = -1;
 unsigned long penReleaseTime = 1;
 
 void setup() {
-  pinMode(WARNING_LED_PIN, OUTPUT);
-  digitalWrite(WARNING_LED_PIN, HIGH);
-  
   serialInit();
 
   tft.begin(RA8875_800x480);
@@ -52,8 +49,6 @@ void setup() {
   tft.fillScreen(RA8875_WHITE);
 
   printStatus("Copyright (c) 2021 Raphael Champeimont");
-
-  digitalWrite(WARNING_LED_PIN, LOW);
 }
 
 void drawBigLine(int x0, int y0, int x1, int y1, uint16_t color) {

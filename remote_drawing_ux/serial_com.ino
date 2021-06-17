@@ -13,7 +13,6 @@ int serialReceiveStatusMessage(char msg[MAX_STATUS_MESSAGE_BUFFER_SIZE]) {
     // The message is too big, so we need to discard it until we reach NUL
     while (Serial.read() != 0);
     msg[MAX_STATUS_MESSAGE_BUFFER_SIZE - 1] = 0;
-    digitalWrite(WARNING_LED_PIN, HIGH);
     // Return 1 because we can still display the truncated string
     return 1;
   } else if (readChars > 0) {
