@@ -35,6 +35,8 @@ void setup() {
 
   connectToRedisServer();
 
+  downloadInitialData();
+
   sendStatusMessage("Ready");
 
   Serial.println("Setup finished.");
@@ -72,6 +74,24 @@ void handleRedisReceive() {
     Serial.print("REDIS: ");
     Serial.println(buf);
   }
+}
+
+void downloadInitialData() {
+  int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+  int count;
+
+  sendStatusMessage("Downloading drawing from server...");
+  count = redisDownloadLinesBegin();
+  while(1);
+  
+  for (int i=0; i<count; i++) {
+    // Receive line from Redis
+    redisDownloadLine(&x0, &y0, &x1, &y1);
+    // Send line to UX Arduino to render it on screen
+    serialTransmitLine(x0, y0, x1, y1);
+  }
+
+  sendStatusMessage("Downloading drawing finished.");
 }
 
 void loop() {
