@@ -30,6 +30,7 @@ void sendStatusMessageFormat(const char *format, ...) {
   va_end(args);
 }
 
+// Report fatal error on status bar and reboot. This function never returns.
 void fatalError(const char *format, ...) {
   char buf[MAX_STATUS_MESSAGE_BUFFER_SIZE];
   char bufFinal[MAX_STATUS_MESSAGE_BUFFER_SIZE];

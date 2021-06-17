@@ -31,6 +31,8 @@ void setup() {
 
   connectToRedisServer();
 
+  sendStatusMessage("Ready");
+
   Serial.println("Setup finished.");
   Serial.println("====================================================");
   digitalWrite(LED_BUILTIN, LOW);
@@ -40,7 +42,7 @@ void setup() {
 void handleSerialReceiveLine() {
   int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
   if (serialReceiveLine(&x0, &y0, &x1, &y1)) {
-    //Serial.println("SERIAL DATA: LINE\n");
+    redisTransmitLine(x0, y0, x1, y1);
   } else {
     sendStatusMessage("Invalid line data received from UX Arduino on Wifi Arduino");
   }
@@ -62,7 +64,7 @@ void handleSerialReceive() {
 
 void handleRedisReceive() {
   char buf[REDIS_RECEIVE_BUFFER_SIZE];
-  if (tryRedisReceive(buf)) {
+  if (redisTryReceiveSub(buf)) {
     Serial.print("REDIS: ");
     Serial.println(buf);
   }

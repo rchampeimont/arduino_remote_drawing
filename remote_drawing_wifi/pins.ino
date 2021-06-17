@@ -1,7 +1,6 @@
 #include "pins.h"
 #include "serial_com.h"
 
-// Reboot the entire system
 void reboot() {
   sendStatusMessage("Rebooting...");
   delay(1000);
