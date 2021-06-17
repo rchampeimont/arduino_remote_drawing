@@ -19,8 +19,6 @@ void connectClient(WiFiClient *client) {
     fatalError("Connection FAILED to Redis server");
   }
 
-  client->setTimeout(10000);
-
   sendStatusMessage("Authenticating with Redis server...");
   client->write("AUTH ");
   client->write(REDIS_PASSWORD);
