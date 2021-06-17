@@ -79,5 +79,3 @@ int tryRedisReceive(char buf[REDIS_RECEIVE_BUFFER_SIZE]) {
   if (! client.available()) return 0;
   return redisReceive(buf);
 }
-
-void transmitR
