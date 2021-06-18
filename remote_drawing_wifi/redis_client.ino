@@ -7,6 +7,13 @@
 #include "secrets.h"
 #include "pins.h"
 
+#define MAX_LINES_IN_SEND_BUFFER 500
+#define LINE_SIZE_BYTES 8
+
+int lineSendBufferIndex = 0;
+const int LINE_SEND_BUFFER_SIZE_BYTES = LINE_SIZE_BYTES*MAX_LINES_IN_SEND_BUFFER;
+byte lineSendBuffer[LINE_SEND_BUFFER_SIZE_BYTES];
+
 // Used to run commands
 WiFiClient mainClient;
 
@@ -166,7 +173,12 @@ void redisReadArrayElement(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZ
 
 void redisTransmitLine(int x0, int y0, int x1, int y1) {
   int a[4] = { x0, y0, x1, y1 };
-  redisRPUSH("remote_drawing_lines", (byte *) a, sizeof(a));
+  //redisRPUSH("remote_drawing_lines", (byte *) a, sizeof(a));
+  memcpy(lineSendBuffer + lineSendBufferIndex, a, LINE_SIZE_BYTES);
+  lineSendBufferIndex += LINE_SIZE_BYTES;
+  if (lineSendBufferIndex >= LINE_SEND_BUFFER_SIZE_BYTES) {
+    fatalError("Line sending buffer is full");
+  }
 }
 
 int redisDownloadLinesBegin() {
