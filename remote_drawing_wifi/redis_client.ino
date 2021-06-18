@@ -102,7 +102,7 @@ void redisReceive(WiFiClient *client, char buf[REDIS_RECEIVE_BUFFER_SIZE], const
 
 // Receive binary data with Redis with specified sized.
 // Typically used because Redis tells the same of data before sending it.
-void redisReceiveBinary(WiFiClient *client, char buf[REDIS_RECEIVE_BUFFER_SIZE], int length, const char *command) {
+void redisReceiveBinary(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZE], int length, const char *command) {
   // Redis sends the binary data followed by CRLF (so there are 2 extra bytes)
   if (length + 2 > REDIS_RECEIVE_BUFFER_SIZE) {
     fatalError("Cannot receive Redis data of size %d which exceed buffer size", length);
@@ -120,19 +120,19 @@ int redisTryReceiveSub(char buf[REDIS_RECEIVE_BUFFER_SIZE]) {
   return 1;
 }
 
-// Execute the Redis LPUSH command.
+// Execute the Redis RPUSH command.
 // Value is contained in "buf" of size "bufsize"
 // Returns the number of elements in the array after the push
-int redisLPUSH(const char *key, byte buf[], int bufsize) {
+int redisRPUSH(const char *key, byte buf[], int bufsize) {
   mainClient.write("*3\r\n");
   mainClient.write("$5\r\n");
-  mainClient.write("LPUSH\r\n");
+  mainClient.write("RPUSH\r\n");
   mainClient.write("$"); mainClient.print(strlen(key)); mainClient.write("\r\n");
   mainClient.write(key); mainClient.write("\r\n");
   mainClient.write("$");  mainClient.print(bufsize); mainClient.write("\r\n");
   mainClient.write(buf, bufsize); mainClient.write("\r\n");
 
-  return expectRedisInteger(&mainClient, "LPUSH");
+  return expectRedisInteger(&mainClient, "RPUSH");
 }
 
 // Execute the Redis LRANGE command.
@@ -159,16 +159,14 @@ int redisLRANGE(const char *key, int start, int stop) {
 
 // Download one array element, for used after LRANGE for instance.
 // To call for each array element to read
-void redisReadArrayElement(WiFiClient *client, char buf[REDIS_RECEIVE_BUFFER_SIZE], const char *command) {
+void redisReadArrayElement(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZE], const char *command) {
   int dataLength = expectRedisBulkStringLength(client, command);
   redisReceiveBinary(client, buf, dataLength, command);
-  Serial.print("Read array element of size ");
-  Serial.println(dataLength);
 }
 
 void redisTransmitLine(int x0, int y0, int x1, int y1) {
   int a[4] = { x0, y0, x1, y1 };
-  redisLPUSH("remote_drawing_lines", (byte *) a, sizeof(a));
+  redisRPUSH("remote_drawing_lines", (byte *) a, sizeof(a));
 }
 
 int redisDownloadLinesBegin() {
@@ -177,12 +175,12 @@ int redisDownloadLinesBegin() {
 
 // Goes with redisDownloadLinesBegin()
 void redisDownloadLine(int *x0, int *y0, int *x1, int *y1) {
-  char buf[REDIS_RECEIVE_BUFFER_SIZE];
+  byte buf[REDIS_RECEIVE_BUFFER_SIZE];
 
   redisReadArrayElement(&mainClient, buf, "LRANGE");
   
   memcpy(x0, buf, 2);
   memcpy(y0, buf+2, 2);
   memcpy(x1, buf+4, 2);
-  memcpy(y1, buf+8, 2);
+  memcpy(y1, buf+6, 2);
 }
