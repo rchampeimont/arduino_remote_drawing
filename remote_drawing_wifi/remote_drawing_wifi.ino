@@ -87,6 +87,8 @@ void downloadInitialData() {
     redisDownloadLine(&x0, &y0, &x1, &y1);
     // Send line to UX Arduino to render it on screen
     serialTransmitLine(x0, y0, x1, y1);
+    // Leave some time for the UX Arduino to render the line
+    delay(10);
   }
 
   sendStatusMessageFormat("Downloading drawing finished (%d lines).", count);
