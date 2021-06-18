@@ -17,11 +17,9 @@ const int LINE_WIDTH = 3;
 // How many filled circles to draw to draw a big line
 const int LINE_STEPS = 10;
 
-// Discard lines shorter than this length, to optimize bandwidth usage
-// Value 10 gives the best results. It divides data to send by around 10.
-// Value 5 or lower tend to draw many lines even if user wants to draw a single point
-// Values 15 and above then to make curves look like polygons
-const int LINE_MIN_LENGTH = 10;
+// Record a line point every
+#define POINT_SAMPLING_PERIOD 20 // ms
+
 
 // Consider the pen is realsed after this delay
 const unsigned long RELEASE_DELAY = 50; // ms
@@ -34,6 +32,7 @@ int beforeLastTouchX = -1;
 int beforeLastTouchY = -1;
 int lastLineX = -1;
 int lastLineY = -1;
+unsigned long lastLinePointTime = 0;
 
 // We use 0 as meaning "not released"
 unsigned long penReleaseTime = 1;
@@ -163,14 +162,17 @@ void handleTouch() {
 
       if (beforeLastTouchX >= 0 && lastTouchX >= 0) {
         extractPoint(beforeLastTouchX, beforeLastTouchY, lastTouchX, lastTouchY, newX, newY, &lineX, &lineY);
+
+        unsigned long now = millis();
         if (lastLineX >= 0) {
           // We are continuing a line.
-          // Don't draw a line if it is too small. This is to optimize the amount of data to transmit.
-          if (approxDistance(lastLineX, lastLineY, lineX, lineY) > LINE_MIN_LENGTH) {
+          // Limit the number of line points generated per second, to optimize bandwidth
+          if (now >= lastLinePointTime + POINT_SAMPLING_PERIOD) {
             drawBigLine(lastLineX, lastLineY, lineX, lineY, RA8875_BLACK);
             serialTransmitLine(lastLineX, lastLineY, lineX, lineY);
             lastLineX = lineX;
             lastLineY = lineY;
+            lastLinePointTime = now;
           }
         } else {
           // This is the first point of athe line, so let's draw a single point
@@ -179,6 +181,7 @@ void handleTouch() {
           serialTransmitLine(lineX, lineY, lineX, lineY);
           lastLineX = lineX;
           lastLineY = lineY;
+          lastLinePointTime = now;
         }
       }
 

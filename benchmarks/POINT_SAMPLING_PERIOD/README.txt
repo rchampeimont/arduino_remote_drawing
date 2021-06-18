@@ -1,0 +1,1 @@
+I tested a few different settings of POINT_SAMPLING_PERIOD in remote_drawing_ux
