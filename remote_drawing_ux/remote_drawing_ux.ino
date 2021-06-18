@@ -17,6 +17,12 @@ const int LINE_WIDTH = 3;
 // How many filled circles to draw to draw a big line
 const int LINE_STEPS = 10;
 
+// Discard lines shorter than this length, to optimize bandwidth usage
+// Value 10 gives the best results. It divides data to send by around 10.
+// Value 5 or lower tend to draw many lines even if user wants to draw a single point
+// Values 15 and above then to make curves look like polygons
+const int LINE_MIN_LENGTH = 10;
+
 // Consider the pen is realsed after this delay
 const unsigned long RELEASE_DELAY = 50; // ms
 
@@ -102,16 +108,22 @@ void handleReceive() {
   }
 }
 
+// Compute an approximate distance between (x1,y1) and (x2,y2)
 int approxDistance(int x1, int y1, int x2, int y2) {
   // Use L1 norm because it's fast to compute and does not overflow 16-bit integers
   return abs(x1 - x2) + abs(y1 - y2);
 }
 
+// Average the coordinates of two points
 void averagePoints(int x0, int y0, int x1, int y1, int *x, int *y) {
   *x = x0 + (x1 - x0) / 2;
   *y = y0 + (y1 - y0) / 2;
 }
 
+// We sometimes get random incorrect values from the touch screen.
+// To handle that, we perform the following operation for every 3 successive ponits:
+// We take the two that are nearest to each other,
+// and average their corrdinates to make the final coordinates.
 void extractPoint(int x1, int y1, int x2, int y2, int x3, int y3, int *x, int *y) {
   int d12 = approxDistance(x1, y1, x2, y2);
   int d23 = approxDistance(x2, y2, x3, y3);
@@ -152,11 +164,22 @@ void handleTouch() {
       if (beforeLastTouchX >= 0 && lastTouchX >= 0) {
         extractPoint(beforeLastTouchX, beforeLastTouchY, lastTouchX, lastTouchY, newX, newY, &lineX, &lineY);
         if (lastLineX >= 0) {
-          drawBigLine(lastLineX, lastLineY, lineX, lineY, RA8875_BLACK);
-          serialTransmitLine(lastLineX, lastLineY, lineX, lineY);
+          // We are continuing a line.
+          // Don't draw a line if it is too small. This is to optimize the amount of data to transmit.
+          if (approxDistance(lastLineX, lastLineY, lineX, lineY) > LINE_MIN_LENGTH) {
+            drawBigLine(lastLineX, lastLineY, lineX, lineY, RA8875_BLACK);
+            serialTransmitLine(lastLineX, lastLineY, lineX, lineY);
+            lastLineX = lineX;
+            lastLineY = lineY;
+          }
+        } else {
+          // This is the first point of athe line, so let's draw a single point
+          // because the user might want to draw a single point and release the pen.
+          drawBigLine(lineX, lineY, lineX, lineY, RA8875_BLACK);
+          serialTransmitLine(lineX, lineY, lineX, lineY);
+          lastLineX = lineX;
+          lastLineY = lineY;
         }
-        lastLineX = lineX;
-        lastLineY = lineY;
       }
 
       beforeLastTouchX = lastTouchX;

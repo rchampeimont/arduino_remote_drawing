@@ -1,0 +1,1 @@
+I tested a few different settings of MIN_LINE_LENGTH in remote_drawing_ux
