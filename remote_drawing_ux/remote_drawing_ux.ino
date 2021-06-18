@@ -68,7 +68,7 @@ void drawBigLine(int x0, int y0, int x1, int y1, uint16_t color) {
 void handleReceiveLine() {
   int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
   if (serialReceiveLine(&x0, &y0, &x1, &y1)) {
-    drawBigLine(x0, y0, x1, y1, RA8875_BLUE);
+    drawBigLine(x0, y0, x1, y1, RA8875_BLACK);
   } else {
     printStatus("Invalid line data received on UX Arduino");
   }
