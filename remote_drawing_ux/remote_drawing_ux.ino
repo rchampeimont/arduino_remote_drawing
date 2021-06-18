@@ -26,8 +26,8 @@ int lastTouchX = -1;
 int lastTouchY = -1;
 int beforeLastTouchX = -1;
 int beforeLastTouchY = -1;
-int lastAverageX = -1;
-int lastAverageY = -1;
+int lastLineX = -1;
+int lastLineY = -1;
 
 // We use 0 as meaning "not released"
 unsigned long penReleaseTime = 1;
@@ -137,7 +137,7 @@ void extractPoint(int x1, int y1, int x2, int y2, int x3, int y3, int *x, int *y
 
 void handleTouch() {
   uint16_t rawX, rawY;
-  int averageX, averageY, newX, newY;
+  int lineX, lineY, newX, newY;
   if (tft.touched()) {
     penReleaseTime = 0;
     tft.touchRead(&rawX, &rawY);
@@ -150,13 +150,13 @@ void handleTouch() {
         && newY < DISPLAY_HEIGHT - STATUS_BAR_SIZE) {
 
       if (beforeLastTouchX >= 0 && lastTouchX >= 0) {
-        extractPoint(beforeLastTouchX, beforeLastTouchY, lastTouchX, lastTouchY, newX, newY, &averageX, &averageY);
-        if (lastAverageX >= 0) {
-          drawBigLine(lastAverageX, lastAverageY, averageX, averageY, RA8875_BLACK);
-          serialTransmitLine(lastAverageX, lastAverageY, averageX, averageY);
+        extractPoint(beforeLastTouchX, beforeLastTouchY, lastTouchX, lastTouchY, newX, newY, &lineX, &lineY);
+        if (lastLineX >= 0) {
+          drawBigLine(lastLineX, lastLineY, lineX, lineY, RA8875_BLACK);
+          serialTransmitLine(lastLineX, lastLineY, lineX, lineY);
         }
-        lastAverageX = averageX;
-        lastAverageY = averageY;
+        lastLineX = lineX;
+        lastLineY = lineY;
       }
 
       beforeLastTouchX = lastTouchX;
@@ -174,8 +174,8 @@ void handleTouch() {
       beforeLastTouchY = -1;
       lastTouchX = -1;
       lastTouchY = -1;
-      lastAverageX = -1;
-      lastAverageY = -1;
+      lastLineX = -1;
+      lastLineY = -1;
     }
   }
 }
