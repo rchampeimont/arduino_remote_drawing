@@ -80,7 +80,7 @@ void downloadInitialData() {
   sendStatusMessage("Downloading drawing from server...");
   count = redisDownloadLinesBegin();
   
-  sendStatusMessageFormat("Downloading %d lines from server...", count);
+  sendStatusMessageFormat("Downloading drawing from server (%d lines). Please wait...", count);
   
   for (int i=0; i<count; i++) {
     // Receive line from Redis
@@ -91,12 +91,13 @@ void downloadInitialData() {
     delay(10);
   }
 
-  sendStatusMessageFormat("Downloading drawing finished (%d lines).", count);
+  sendStatusMessageFormat("Downloading drawing finished (%d lines). You can now draw things!", count);
 }
 
 void loop() {
   handleSerialReceive();
   handleRedisReceive();
+  runRedisPeriodicTasks();
 
   if (millis() > REBOOT_EVERY_MS) {
     sendStatusMessage("It's time for the periodic reboot! Please wait a minute...");

@@ -1,7 +1,7 @@
 #ifndef REDIS_CLIENT_H
 #define REDIS_CLIENT_H
 
-#define REDIS_RECEIVE_BUFFER_SIZE 1024
+#define REDIS_RECEIVE_BUFFER_SIZE 100
 
 void connectToRedisServer();
 
@@ -17,5 +17,7 @@ int redisDownloadLinesBegin();
 // To call after redisDownloadLinesStart(),
 // as many times as the value redisDownloadLinesStart() returned.
 void redisDownloadLine(int *x0, int *y0, int *x1, int *y1);
+
+void runRedisPeriodicTasks();
 
 #endif

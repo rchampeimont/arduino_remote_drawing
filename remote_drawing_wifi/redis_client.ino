@@ -9,10 +9,13 @@
 
 #define MAX_LINES_IN_SEND_BUFFER 500
 #define LINE_SIZE_BYTES 8
+#define REDIS_TIMEOUT 5000 // ms
+#define SEND_BUFFER_EVERY 1000 // ms
 
 int lineSendBufferIndex = 0;
-const int LINE_SEND_BUFFER_SIZE_BYTES = LINE_SIZE_BYTES*MAX_LINES_IN_SEND_BUFFER;
+const int LINE_SEND_BUFFER_SIZE_BYTES = LINE_SIZE_BYTES * MAX_LINES_IN_SEND_BUFFER;
 byte lineSendBuffer[LINE_SEND_BUFFER_SIZE_BYTES];
+unsigned long lastSentBufferTime = millis();
 
 // Used to run commands
 WiFiClient mainClient;
@@ -25,6 +28,8 @@ void connectClient(WiFiClient *client) {
   if (! client->connect(REDIS_ADDR, REDIS_PORT)) {
     fatalError("Connection FAILED to Redis server");
   }
+
+  client->setTimeout(REDIS_TIMEOUT);
 
   sendStatusMessage("Authenticating with Redis server...");
   client->write("AUTH ");
@@ -142,6 +147,24 @@ int redisRPUSH(const char *key, byte buf[], int bufsize) {
   return expectRedisInteger(&mainClient, "RPUSH");
 }
 
+
+int redisBatchRPUSH(const char *key, byte buf[], int elementSize, int numberOfElements) {
+  mainClient.write("*"); mainClient.print(2 + numberOfElements); mainClient.write("\r\n");
+  // Send command
+  mainClient.write("$5\r\n");
+  mainClient.write("RPUSH\r\n");
+  // Send key
+  mainClient.write("$"); mainClient.print(strlen(key)); mainClient.write("\r\n");
+  mainClient.write(key); mainClient.write("\r\n");
+  // Send value
+  for (int i = 0; i < numberOfElements; i++) {
+    mainClient.write("$");  mainClient.print(elementSize); mainClient.write("\r\n");
+    mainClient.write(buf + i * elementSize, elementSize); mainClient.write("\r\n");
+  }
+
+  return expectRedisInteger(&mainClient, "RPUSH");
+}
+
 // Execute the Redis LRANGE command.
 // Returns the number of elements in the array
 // You should then read them with redisReadArrayElement()
@@ -173,11 +196,37 @@ void redisReadArrayElement(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZ
 
 void redisTransmitLine(int x0, int y0, int x1, int y1) {
   int a[4] = { x0, y0, x1, y1 };
-  //redisRPUSH("remote_drawing_lines", (byte *) a, sizeof(a));
+
+  // Add line in send buffer
   memcpy(lineSendBuffer + lineSendBufferIndex, a, LINE_SIZE_BYTES);
   lineSendBufferIndex += LINE_SIZE_BYTES;
+
   if (lineSendBufferIndex >= LINE_SEND_BUFFER_SIZE_BYTES) {
-    fatalError("Line sending buffer is full");
+    Serial.println("Send buffer full");
+    sendLinesInBuffer();
+  }
+}
+
+void sendLinesInBuffer() {
+  if (lineSendBufferIndex > 0) {
+    Serial.write("Sending buffer (");
+    Serial.print(lineSendBufferIndex);
+    Serial.println(" lines)...");
+    unsigned long start = millis();
+    redisBatchRPUSH("remote_drawing_lines", lineSendBuffer, LINE_SIZE_BYTES, lineSendBufferIndex);
+    lineSendBufferIndex = 0;
+    unsigned long end = millis();
+    Serial.write("Buffer sent (took ");
+    Serial.print(end - start);
+    Serial.println(" ms).");
+  }
+}
+
+void runRedisPeriodicTasks() {
+  unsigned long now = millis();
+  if (now >= lastSentBufferTime + SEND_BUFFER_EVERY) {
+    sendLinesInBuffer();
+    lastSentBufferTime = now;
   }
 }
 
@@ -190,9 +239,9 @@ void redisDownloadLine(int *x0, int *y0, int *x1, int *y1) {
   byte buf[REDIS_RECEIVE_BUFFER_SIZE];
 
   redisReadArrayElement(&mainClient, buf, "LRANGE");
-  
+
   memcpy(x0, buf, 2);
-  memcpy(y0, buf+2, 2);
-  memcpy(x1, buf+4, 2);
-  memcpy(y1, buf+6, 2);
+  memcpy(y0, buf + 2, 2);
+  memcpy(x1, buf + 4, 2);
+  memcpy(y1, buf + 6, 2);
 }
