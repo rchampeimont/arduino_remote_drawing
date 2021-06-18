@@ -3,6 +3,7 @@
 
 #define SERIAL_COM_LINE_OPCODE 'L'
 #define SERIAL_COM_MSG_OPCODE 'M'
+#define SERIAL_COM_CLEAR_OPCODE 'C'
 
 // With the default font, 100 characters per line can be displayed exactly.
 #define MAX_STATUS_MESSAGE_BUFFER_SIZE 101

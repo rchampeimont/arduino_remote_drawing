@@ -11,6 +11,9 @@ void serialInit() {
   delay(5000);
 
   sendStatusMessage("Hello received from Wifi Arduino");
+
+  // Clear any remaining displayed drawing from previous run.
+  serialTransmitClear();
 }
 
 void sendStatusMessage(const char *msg) {
@@ -68,4 +71,8 @@ int serialReceiveLine(int *x0, int *y0, int *x1, int *y1) {
 int serialReceiveOpCode() {
   int opcode = Serial1.read();
   return opcode;
+}
+
+void serialTransmitClear() {
+  Serial1.write(SERIAL_COM_CLEAR_OPCODE);
 }

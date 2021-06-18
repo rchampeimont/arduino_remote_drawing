@@ -75,6 +75,11 @@ void handleReceiveStatusMessage() {
   printStatus(msg);
 }
 
+void clearDisplayedDrawing() {
+  tft.fillRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT - STATUS_BAR_SIZE, RA8875_WHITE);
+}
+
+
 void handleReceive() {
   int opcode = serialReceiveOpCode();
   switch (opcode) {
@@ -86,6 +91,9 @@ void handleReceive() {
       break;
     case SERIAL_COM_MSG_OPCODE:
       handleReceiveStatusMessage();
+      break;
+    case SERIAL_COM_CLEAR_OPCODE:
+      clearDisplayedDrawing();
       break;
     default:
       char errorMsg[SERIAL_COM_MSG_OPCODE];
