@@ -50,19 +50,13 @@ void fatalError(const char *format, ...) {
   va_end(args);
 }
 
-void serialTransmitLine(int x0, int y0, int x1, int y1) {
-  int a[4] = { x0, y0, x1, y1 };
+void serialTransmitLine(Line line) {
   Serial1.write(SERIAL_COM_LINE_OPCODE);
-  Serial1.write((byte*) a, sizeof(a));
+  Serial1.write((byte*) &line, sizeof(Line));
 }
 
-int serialReceiveLine(int *x0, int *y0, int *x1, int *y1) {
-  int a[4];
-  if (Serial1.readBytes((byte*) a, sizeof(a)) == sizeof(a)) {
-    *x0 = a[0];
-    *y0 = a[1];
-    *x1 = a[2];
-    *y1 = a[3];
+int serialReceiveLine(Line *line) {
+  if (Serial1.readBytes((byte*) line, sizeof(Line)) == sizeof(Line)) {
     return 1;
   } else {
     return 0;

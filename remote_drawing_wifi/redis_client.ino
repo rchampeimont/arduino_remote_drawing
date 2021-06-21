@@ -13,13 +13,6 @@
 #define PING_EVERY 30000 // ms
 #define REDIS_CHANNEL "remote_drawing"
 
-typedef struct {
-  int x0;
-  int y0;
-  int x1;
-  int y1;
-} Line;
-
 int lineSendBufferIndex = 0;
 Line lineSendBuffer[MAX_LINES_IN_SEND_BUFFER];
 unsigned long lastSentBufferTime = millis();
@@ -248,12 +241,9 @@ void redisReadArrayElement(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZ
   redisReceiveBinary(client, buf, dataLength, command);
 }
 
-void redisTransmitLine(int x0, int y0, int x1, int y1) {
+void redisTransmitLine(Line line) {
   // Add line in send buffer
-  lineSendBuffer[lineSendBufferIndex].x0 = x0;
-  lineSendBuffer[lineSendBufferIndex].y0 = y0;
-  lineSendBuffer[lineSendBufferIndex].x1 = x1;
-  lineSendBuffer[lineSendBufferIndex].y1 = y1;
+  lineSendBuffer[lineSendBufferIndex] = line;
   lineSendBufferIndex++;
 
   if (lineSendBufferIndex >= MAX_LINES_IN_SEND_BUFFER) {
@@ -339,13 +329,9 @@ int redisDownloadLinesBegin(int start, int stop) {
   return redisLRANGE("remote_drawing_lines", start, stop);
 }
 
-void redisDownloadLine(int *x0, int *y0, int *x1, int *y1) {
+void redisDownloadLine(Line *line) {
   byte buf[REDIS_RECEIVE_BUFFER_SIZE];
 
   redisReadArrayElement(&mainClient, buf, "LRANGE");
-
-  *x0 = *((int *) buf);
-  *y0 = *((int *) buf + 1);
-  *x1 = *((int *) buf + 2);
-  *y1 = *((int *) buf + 3);
+  *line = *((Line *) buf);
 }

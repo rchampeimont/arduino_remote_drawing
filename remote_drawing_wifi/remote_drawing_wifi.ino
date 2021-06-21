@@ -46,9 +46,9 @@ void setup() {
 
 // Handle a drawn line received from "our" UX Arduino
 void handleSerialReceiveLine() {
-  int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
-  if (serialReceiveLine(&x0, &y0, &x1, &y1)) {
-    redisTransmitLine(x0, y0, x1, y1);
+  Line line;
+  if (serialReceiveLine(&line)) {
+    redisTransmitLine(line);
   } else {
     sendStatusMessage("Invalid line data received from UX Arduino on Wifi Arduino");
   }
@@ -89,13 +89,13 @@ void handleRedisReceive() {
 }
 
 void getLinesFromRedisAndDrawThem(int count) {
-  int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+  Line line;
 
   for (int i = 0; i < count; i++) {
     // Receive line from Redis
-    redisDownloadLine(&x0, &y0, &x1, &y1);
+    redisDownloadLine(&line);
     // Send line to UX Arduino to render it on screen
-    serialTransmitLine(x0, y0, x1, y1);
+    serialTransmitLine(line);
     // Leave some time for the UX Arduino to render the line
     delay(10);
   }
