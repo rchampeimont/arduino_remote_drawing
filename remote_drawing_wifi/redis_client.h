@@ -6,13 +6,15 @@
 void connectToRedisServer();
 
 // Receive Redis data from the subscription channel if there is any
-int redisTryReceiveSub(char buf[REDIS_RECEIVE_BUFFER_SIZE]);
+int redisReceiveMessage(int *fromClientId, int *newLinesStartIndex, int *newLinesStopIndex);
 
 // Send a line drawn by the local user to the Redis server
 void redisTransmitLine(int x0, int y0, int x1, int y1);
 
-// Download the complete drawing stored on the server, typically used at boot
-int redisDownloadLinesBegin();
+// Download the drawing lines in interval [start, stop].
+// Pass [0,-1] to get all lines.
+// Call redisDownloadLine() to then get each line
+int redisDownloadLinesBegin(int start, int stop);
 
 // To call after redisDownloadLinesStart(),
 // as many times as the value redisDownloadLinesStart() returned.

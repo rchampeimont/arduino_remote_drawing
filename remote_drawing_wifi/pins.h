@@ -10,7 +10,7 @@
 // This pin must be pulled LOW on one of the two Wifi Arduinos
 #define CLIENT_ID_PIN 5
 
-extern byte clientId;
+extern byte myClientId;
 
 // Reboot the entire system (both Arduinos). This function never returns.
 void reboot();

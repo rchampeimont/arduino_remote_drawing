@@ -11,6 +11,7 @@
 #define LINE_SIZE_BYTES 8
 #define REDIS_TIMEOUT 5000 // ms
 #define SEND_BUFFER_EVERY 1000 // ms
+#define REDIS_CHANNEL "remote_drawing"
 
 int lineSendBufferIndex = 0;
 const int LINE_SEND_BUFFER_SIZE_BYTES = LINE_SIZE_BYTES * MAX_LINES_IN_SEND_BUFFER;
@@ -44,14 +45,23 @@ void connectToRedisServer() {
   connectClient(&mainClient);
 
   sendStatusMessage("Subscribing to Redis channel...");
-  subClient.write("SUBSCRIBE remote_drawing\r\n");
+  redisSUBSCRIBE(&subClient, REDIS_CHANNEL);
+  sendStatusMessage("Subscribing to Redis channel OK.");
+}
+
+void redisSUBSCRIBE(WiFiClient *client, const char *channel) {
+  char s[10];
+
+  client->write("SUBSCRIBE ");
+  client->write(channel);
+  client->write("\r\n");
   expectRedisResponse(&subClient, "SUBSCRIBE", "*3");
   expectRedisResponse(&subClient, "SUBSCRIBE", "$9");
   expectRedisResponse(&subClient, "SUBSCRIBE", "subscribe");
-  expectRedisResponse(&subClient, "SUBSCRIBE", "$14");
-  expectRedisResponse(&subClient, "SUBSCRIBE", "remote_drawing");
+  snprintf(s, sizeof(s), "$%d", strlen(channel));
+  expectRedisResponse(&subClient, "SUBSCRIBE", s);
+  expectRedisResponse(&subClient, "SUBSCRIBE", channel);
   expectRedisResponse(&subClient, "SUBSCRIBE", ":1");
-  sendStatusMessage("Subscribing to Redis channel OK.");
 }
 
 // Checks that Redis responds with expectedResponse.
@@ -112,12 +122,14 @@ void redisReceive(WiFiClient *client, char buf[REDIS_RECEIVE_BUFFER_SIZE], const
   }
 }
 
-// Receive binary data with Redis with specified sized.
+// Receive binary data with Redis with specified length.
+// Note: you always need to provide a buffer of REDIS_RECEIVE_BUFFER_SIZE.
+// Length can at most be REDIS_RECEIVE_BUFFER_SIZE + 2.
 // Typically used because Redis tells the same of data before sending it.
 void redisReceiveBinary(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZE], int length, const char *command) {
   // Redis sends the binary data followed by CRLF (so there are 2 extra bytes)
   if (length + 2 > REDIS_RECEIVE_BUFFER_SIZE) {
-    fatalError("Cannot receive Redis data of size %d which exceed buffer size", length);
+    fatalError("Cannot receive Redis data of size %d which exceeds buffer size", length);
   }
   int readChars = client->readBytes(buf, length + 2);
   if (readChars != length + 2) {
@@ -126,9 +138,32 @@ void redisReceiveBinary(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZE],
 }
 
 // Try to receive Redis data if there is any, but don't wait for it
-int redisTryReceiveSub(char buf[REDIS_RECEIVE_BUFFER_SIZE]) {
+int redisReceiveMessage(int *fromClientId, int *newLinesStartIndex, int *newLinesStopIndex) {
+  byte buf[REDIS_RECEIVE_BUFFER_SIZE];
+  char s[10];
+
   if (! subClient.available()) return 0;
-  redisReceive(&subClient, buf, "subscription");
+
+  expectRedisResponse(&subClient, "message", "*3");
+  expectRedisResponse(&subClient, "message", "$7");
+  expectRedisResponse(&subClient, "message", "message");
+  snprintf(s, sizeof(s), "$%d", strlen(REDIS_CHANNEL));
+  expectRedisResponse(&subClient, "message", s);
+  expectRedisResponse(&subClient, "message", REDIS_CHANNEL);
+
+  int dataLength = expectRedisBulkStringLength(&subClient, "message");
+
+  if (dataLength != 6) {
+    fatalError("Received Redis message has an unexpected size of %d bytes", dataLength);
+  }
+
+  // Read the actual message
+  redisReceiveBinary(&subClient, buf, dataLength, "message");
+
+  *fromClientId = *((int *) buf);
+  *newLinesStartIndex = *((int *) buf + 1);
+  *newLinesStopIndex = *((int *) buf + 2);
+
   return 1;
 }
 
@@ -187,6 +222,18 @@ int redisLRANGE(const char *key, int start, int stop) {
   return expectRedisArrayCount(&mainClient, "LRANGE");
 }
 
+int redisPUBLISH(const char *channel, byte buf[], int bufsize) {
+  mainClient.write("*3\r\n");
+  mainClient.write("$7\r\n");
+  mainClient.write("PUBLISH\r\n");
+  mainClient.write("$"); mainClient.print(strlen(channel)); mainClient.write("\r\n");
+  mainClient.write(channel); mainClient.write("\r\n");
+  mainClient.write("$");  mainClient.print(bufsize); mainClient.write("\r\n");
+  mainClient.write(buf, bufsize); mainClient.write("\r\n");
+
+  return expectRedisInteger(&mainClient, "PUBLISH");
+}
+
 // Download one array element, for used after LRANGE for instance.
 // To call for each array element to read
 void redisReadArrayElement(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZE], const char *command) {
@@ -213,12 +260,26 @@ void sendLinesInBuffer() {
     Serial.print(lineSendBufferIndex);
     Serial.println(" lines)...");
     unsigned long start = millis();
-    redisBatchRPUSH("remote_drawing_lines", lineSendBuffer, LINE_SIZE_BYTES, lineSendBufferIndex);
-    lineSendBufferIndex = 0;
+    int newSize = redisBatchRPUSH("remote_drawing_lines", lineSendBuffer, LINE_SIZE_BYTES, lineSendBufferIndex);
     unsigned long end = millis();
     Serial.write("Buffer sent (took ");
     Serial.print(end - start);
     Serial.println(" ms).");
+
+    int newLinesStartIndex = newSize - lineSendBufferIndex;
+    int newLinesStopIndex = newSize - 1;
+
+    // Now tell tell the channel that we transmitted this data
+    start = millis();
+    // Our convention is to transmit the indices of the added array range
+    int message[3] = { myClientId, newLinesStartIndex, newLinesStopIndex };
+    redisPUBLISH(REDIS_CHANNEL, (byte *) message, sizeof(message));
+    end = millis();
+    Serial.write("Sent message on pub/sub (took ");
+    Serial.print(end - start);
+    Serial.println(" ms).");
+
+    lineSendBufferIndex = 0;
   }
 }
 
@@ -230,16 +291,16 @@ void runRedisPeriodicTasks() {
   }
 }
 
-int redisDownloadLinesBegin() {
-  return redisLRANGE("remote_drawing_lines", 0, -1);
+int redisDownloadLinesBegin(int start, int stop) {
+  return redisLRANGE("remote_drawing_lines", start, stop);
 }
 
-// Goes with redisDownloadLinesBegin()
 void redisDownloadLine(int *x0, int *y0, int *x1, int *y1) {
   byte buf[REDIS_RECEIVE_BUFFER_SIZE];
 
   redisReadArrayElement(&mainClient, buf, "LRANGE");
 
+  // TODO avoid  memcpy calls
   memcpy(x0, buf, 2);
   memcpy(y0, buf + 2, 2);
   memcpy(x1, buf + 4, 2);

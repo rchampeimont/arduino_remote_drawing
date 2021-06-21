@@ -69,22 +69,29 @@ void handleSerialReceive() {
 }
 
 void handleRedisReceive() {
-  char buf[REDIS_RECEIVE_BUFFER_SIZE];
-  if (redisTryReceiveSub(buf)) {
-    Serial.print("Data received with Redis sub");
+  int fromClientId, newLinesStartIndex, newLinesStopIndex;
+  if (redisReceiveMessage(&fromClientId, &newLinesStartIndex, &newLinesStopIndex)) {
+    Serial.write("Redis message received: From client ");
+    Serial.print(fromClientId);
+    Serial.write(" - Interval: ");
+    Serial.print(newLinesStartIndex);
+    Serial.write(" to ");
+    Serial.println(newLinesStopIndex);
+
+    // Download lines only if they come from the other client,
+    // otherwise it means that the lines were drawn by our own user
+    // so they are already displayed on our screen.
+    if (fromClientId != myClientId) {
+      int count = redisDownloadLinesBegin(newLinesStartIndex, newLinesStopIndex);
+      getLinesFromRedisAndDrawThem(count);
+    }
   }
 }
 
-void downloadInitialData() {
+void getLinesFromRedisAndDrawThem(int count) {
   int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
-  int count;
 
-  sendStatusMessage("Downloading drawing from server...");
-  count = redisDownloadLinesBegin();
-  
-  sendStatusMessageFormat("Downloading drawing from server (%d lines). Please wait...", count);
-  
-  for (int i=0; i<count; i++) {
+  for (int i = 0; i < count; i++) {
     // Receive line from Redis
     redisDownloadLine(&x0, &y0, &x1, &y1);
     // Send line to UX Arduino to render it on screen
@@ -92,7 +99,16 @@ void downloadInitialData() {
     // Leave some time for the UX Arduino to render the line
     delay(10);
   }
+}
 
+void downloadInitialData() {
+  int count;
+
+  sendStatusMessage("Downloading drawing from server...");
+  count = redisDownloadLinesBegin(0, -1);
+
+  sendStatusMessageFormat("Downloading drawing from server (%d lines). Please wait...", count);
+  getLinesFromRedisAndDrawThem(count);
   sendStatusMessageFormat("Downloading drawing finished (%d lines). You can now draw things!", count);
 }
 
