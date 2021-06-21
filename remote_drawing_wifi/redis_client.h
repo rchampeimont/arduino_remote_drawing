@@ -8,6 +8,9 @@ void connectToRedisServer();
 // Receive Redis data from the subscription channel if there is any
 int redisReceiveMessage(int *fromClientId, int *newLinesStartIndex, int *newLinesStopIndex);
 
+// Send lines in buffer if there are any
+void sendLinesInBuffer();
+
 // Send a line drawn by the local user to the Redis server
 void redisAddLineToSendBuffer(Line line);
 

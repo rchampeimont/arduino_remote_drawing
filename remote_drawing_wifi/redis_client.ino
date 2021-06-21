@@ -9,7 +9,6 @@
 
 #define MAX_LINES_IN_SEND_BUFFER 200
 #define REDIS_TIMEOUT 5000 // ms
-#define SEND_BUFFER_EVERY 1000 // ms
 #define PING_EVERY 30000 // ms
 #define REDIS_CHANNEL "remote_drawing"
 
@@ -275,7 +274,7 @@ void sendLinesInBuffer() {
 
   // First, change the write pointer so that received data now goes to the other buffer.
   // Since the writes are triggered by interrupt they can happen while this function is running.
-  currentBufferForWrite = currentBufferForWrite == 1 ? 0 : 1;
+  currentBufferForWrite = !currentBufferForWrite;
 
   volatile Line *bufferToRead;
   volatile byte *linesInBufferAddress;
@@ -291,7 +290,9 @@ void sendLinesInBuffer() {
     fatalError("Internal bug: non-empty buffer is the wrong one");
   }
 
-  Serial.write("Sending buffer (");
+  Serial.write("Sending buffer ");
+  Serial.print(!currentBufferForWrite);
+  Serial.write(" (");
   Serial.print(*linesInBufferAddress);
   Serial.println(" lines)...");
   unsigned long start = millis();
@@ -325,40 +326,19 @@ void sendLinesInBuffer() {
 
 void runRedisPeriodicTasks() {
   unsigned long now = millis();
-  if (now >= lastSentBufferTime + SEND_BUFFER_EVERY) {
-    sendLinesInBuffer();
-    lastSentBufferTime = now;
-  }
-
   // Ping the server once in a while to check connection still works
   if (now >= lastPingTime + PING_EVERY) {
-    redisPingAll();
+    int latency = redisPing(&mainClient);
+    sendStatusMessageFormat("Ping: %d ms", latency);
     lastPingTime = now;
   }
 }
 
-void redisPingAll() {
-  int mainPing = redisPing(&mainClient, false);
-  int subPing = redisPing(&subClient, true);
-  sendStatusMessageFormat("Ping: %d ms (main) / %d ms (subscription)", mainPing, subPing);
-}
-
-// The response format of PING is different in a subscribed connection
-// vs a regular one, which is why you need to pass a boolean to
-// say if the client is subscribed.
-int redisPing(WiFiClient *client, bool subscribed) {
+int redisPing(WiFiClient *client) {
   int ping;
   unsigned long start = millis();
   client->write("PING\r\n");
-  if (subscribed) {
-    expectRedisResponse(client, "PING", "*2");
-    expectRedisResponse(client, "PING", "$4");
-    expectRedisResponse(client, "PING", "pong");
-    expectRedisResponse(client, "PING", "$0");
-    expectRedisResponse(client, "PING", "");
-  } else {
-    expectRedisResponse(client, "PING", "+PONG");
-  }
+  expectRedisResponse(client, "PING", "+PONG");
   unsigned long end = millis();
   ping = end - start;
   return ping;

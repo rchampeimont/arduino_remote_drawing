@@ -118,6 +118,7 @@ void downloadInitialData() {
 
 void loop() {
   handleRedisReceive();
+  sendLinesInBuffer();
   runRedisPeriodicTasks();
 
   if (millis() > REBOOT_EVERY_MS) {
@@ -125,4 +126,6 @@ void loop() {
     delay(5000);
     reboot();
   }
+
+  delay(1000);
 }
