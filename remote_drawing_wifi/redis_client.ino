@@ -14,9 +14,9 @@
 
 volatile byte currentBufferForWrite = 0;
 
-volatile Line lineSendBuffer0[MAX_LINES_IN_SEND_BUFFER / 2];
+volatile Line lineSendBuffer0[MAX_LINES_IN_SEND_BUFFER];
 volatile byte linesInBuffer0 = 0;
-volatile Line lineSendBuffer1[MAX_LINES_IN_SEND_BUFFER / 2];
+volatile Line lineSendBuffer1[MAX_LINES_IN_SEND_BUFFER];
 volatile byte linesInBuffer1 = 0;
 
 unsigned long lastSentBufferTime = millis();
