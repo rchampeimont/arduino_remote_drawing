@@ -10,6 +10,7 @@
 #define MAX_LINES_IN_SEND_BUFFER 500
 #define REDIS_TIMEOUT 5000 // ms
 #define SEND_BUFFER_EVERY 1000 // ms
+#define PING_EVERY 30000 // ms
 #define REDIS_CHANNEL "remote_drawing"
 
 typedef struct {
@@ -22,6 +23,7 @@ typedef struct {
 int lineSendBufferIndex = 0;
 Line lineSendBuffer[MAX_LINES_IN_SEND_BUFFER];
 unsigned long lastSentBufferTime = millis();
+unsigned long lastPingTime = millis();
 
 // Used to run commands
 WiFiClient mainClient;
@@ -295,6 +297,42 @@ void runRedisPeriodicTasks() {
     sendLinesInBuffer();
     lastSentBufferTime = now;
   }
+
+  // Ping the server once in a while to check connection still works
+  if (now >= lastPingTime + PING_EVERY) {
+    redisPingAll();
+    lastPingTime = now;
+  }
+}
+
+void redisPingAll() {
+  int mainPing = redisPing(&mainClient, false);
+  int subPing = redisPing(&subClient, true);
+  sendStatusMessageFormat("Ping: %d ms (main) / %d ms (subscription)", mainPing, subPing);
+}
+
+// The response format of PING is different in a subscribed connection
+// vs a regular one, which is why you need to pass a boolean to
+// say if the client is subscribed.
+int redisPing(WiFiClient *client, bool subscribed) {
+  int ping;
+  unsigned long start = millis();
+  client->write("PING\r\n");
+  if (subscribed) {
+    expectRedisResponse(client, "PING", "*2");
+    expectRedisResponse(client, "PING", "$4");
+    expectRedisResponse(client, "PING", "pong");
+    expectRedisResponse(client, "PING", "$0");
+    expectRedisResponse(client, "PING", "");
+  } else {
+    expectRedisResponse(client, "PING", "+PONG");
+  }
+  unsigned long end = millis();
+  ping = end - start;
+  Serial.write("Ping: ");
+  Serial.print(ping);
+  Serial.println(" ms");
+  return ping;
 }
 
 int redisDownloadLinesBegin(int start, int stop) {
