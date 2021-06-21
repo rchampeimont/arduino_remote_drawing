@@ -20,6 +20,17 @@ const int LINE_STEPS = 10;
 // Record a line point every
 #define POINT_SAMPLING_PERIOD 20 // ms
 
+// Colors
+#define NUMBER_OF_COLORS 7
+const uint16_t COLORS[NUMBER_OF_COLORS] {
+  RA8875_BLACK,
+  RA8875_RED,
+  RA8875_GREEN,
+  RA8875_BLUE,
+  RA8875_CYAN,
+  RA8875_MAGENTA,
+  RA8875_YELLOW
+};
 
 // Consider the pen is realsed after this delay
 const unsigned long RELEASE_DELAY = 50; // ms
@@ -36,6 +47,8 @@ unsigned long lastLinePointTime = 0;
 
 // We use 0 as meaning "not released"
 unsigned long penReleaseTime = 1;
+
+byte selectedColor = 0;
 
 void setup() {
   serialInit();
@@ -56,19 +69,23 @@ void setup() {
   printStatus("Copyright (c) 2021 Raphael Champeimont");
 }
 
-void drawBigLine(int x0, int y0, int x1, int y1, uint16_t color) {
-  int DX = x1 - x0;
-  int DY = y1 - y0;
+void drawBigLine(Line line) {
+  int DX = line.x1 - line.x0;
+  int DY = line.y1 - line.y0;
   for (int i = 0; i < LINE_STEPS; i++) {
-    tft.fillCircle(x0 + i / (float) LINE_STEPS * DX, y0 + i / (float) LINE_STEPS * DY, LINE_WIDTH, color);
+    tft.fillCircle(
+      line.x0 + i / (float) LINE_STEPS * DX,
+      line.y0 + i / (float) LINE_STEPS * DY,
+      LINE_WIDTH,
+      COLORS[line.color]);
   }
 }
 
 
 void handleReceiveLine() {
-  int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
-  if (serialReceiveLine(&x0, &y0, &x1, &y1)) {
-    drawBigLine(x0, y0, x1, y1, RA8875_BLACK);
+  Line line;
+  if (serialReceiveLine(&line)) {
+    drawBigLine(line);
   } else {
     printStatus("Invalid line data received on UX Arduino");
   }
@@ -168,8 +185,16 @@ void handleTouch() {
           // We are continuing a line.
           // Limit the number of line points generated per second, to optimize bandwidth
           if (now >= lastLinePointTime + POINT_SAMPLING_PERIOD) {
-            drawBigLine(lastLineX, lastLineY, lineX, lineY, RA8875_BLACK);
-            serialTransmitLine(lastLineX, lastLineY, lineX, lineY);
+            Line line;
+            line.x0 = lastLineX;
+            line.y0 = lastLineY;
+            line.x1 = lineX;
+            line.y1 = lineY;
+            line.color = selectedColor;
+
+            drawBigLine(line);
+            serialTransmitLine(line);
+
             lastLineX = lineX;
             lastLineY = lineY;
             lastLinePointTime = now;
@@ -177,8 +202,16 @@ void handleTouch() {
         } else {
           // This is the first point of athe line, so let's draw a single point
           // because the user might want to draw a single point and release the pen.
-          drawBigLine(lineX, lineY, lineX, lineY, RA8875_BLACK);
-          serialTransmitLine(lineX, lineY, lineX, lineY);
+          Line line;
+          line.x0 = lineX;
+          line.y0 = lineY;
+          line.x1 = lineX;
+          line.y1 = lineY;
+          line.color = selectedColor;
+
+          drawBigLine(line);
+          serialTransmitLine(line);
+
           lastLineX = lineX;
           lastLineY = lineY;
           lastLinePointTime = now;
@@ -196,6 +229,13 @@ void handleTouch() {
       penReleaseTime = millis();
     } else if (millis() - penReleaseTime > RELEASE_DELAY) {
       // Pen has been released for long enough, so consider the pen really released.
+
+      // Temporary code: cycle color on each pen release.
+      // This will be replaced by a color palette in the final version.
+      if (lastLineX != -1) {
+        selectedColor = (selectedColor + 1) % NUMBER_OF_COLORS;
+      }
+
       beforeLastTouchX = -1;
       beforeLastTouchY = -1;
       lastTouchX = -1;

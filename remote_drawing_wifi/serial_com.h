@@ -10,6 +10,7 @@ typedef struct {
   int y0;
   int x1;
   int y1;
+  byte color;
 } Line;
 
 // With the default font, 100 characters per line can be displayed exactly.

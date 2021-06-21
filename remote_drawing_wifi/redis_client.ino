@@ -7,7 +7,7 @@
 #include "secrets.h"
 #include "pins.h"
 
-#define MAX_LINES_IN_SEND_BUFFER 500
+#define MAX_LINES_IN_SEND_BUFFER 400
 #define REDIS_TIMEOUT 5000 // ms
 #define SEND_BUFFER_EVERY 1000 // ms
 #define PING_EVERY 30000 // ms
