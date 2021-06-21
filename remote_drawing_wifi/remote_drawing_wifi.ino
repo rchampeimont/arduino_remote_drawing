@@ -57,6 +57,7 @@ void handleSerialReceiveLine() {
   }
 }
 
+// This function is an Interrupt Service Routine (ISR)
 void handleSerialReceive() {
   int opcode = serialReceiveOpCode();
   switch (opcode) {
