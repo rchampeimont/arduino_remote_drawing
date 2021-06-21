@@ -5,6 +5,9 @@
 
 void serialInit() {
   Serial.begin(115200, SERIAL_8E1);
+
+  // Used to trigger serial reception on the other side
+  pinMode(WIFI_ARDUINO_INTERRUPT_PIN, OUTPUT);
 }
 
 int serialReceiveStatusMessage(char msg[MAX_STATUS_MESSAGE_BUFFER_SIZE]) {
@@ -24,8 +27,14 @@ int serialReceiveStatusMessage(char msg[MAX_STATUS_MESSAGE_BUFFER_SIZE]) {
 }
 
 void serialTransmitLine(Line line) {
+  digitalWrite(WIFI_ARDUINO_INTERRUPT_PIN, HIGH);
+  
   Serial.write(SERIAL_COM_LINE_OPCODE);
   Serial.write((byte*) &line, sizeof(Line));
+  Serial.flush();
+
+  // Tell the receiver to read the serial data now
+  digitalWrite(WIFI_ARDUINO_INTERRUPT_PIN, LOW);
 }
 
 int serialReceiveLine(Line *line) {

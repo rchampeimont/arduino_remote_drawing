@@ -9,7 +9,7 @@ void connectToRedisServer();
 int redisReceiveMessage(int *fromClientId, int *newLinesStartIndex, int *newLinesStopIndex);
 
 // Send a line drawn by the local user to the Redis server
-void redisTransmitLine(Line line);
+void redisAddLineToSendBuffer(Line line);
 
 // Download the drawing lines in interval [start, stop].
 // Pass [0,-1] to get all lines.

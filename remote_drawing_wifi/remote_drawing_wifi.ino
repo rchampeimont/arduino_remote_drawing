@@ -33,6 +33,9 @@ void setup() {
   // Init serial connection to the other Arduino
   serialInit();
 
+
+  attachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN), handleSerialReceive, FALLING);
+
   initWifi();
 
   connectToRedisServer();
@@ -48,9 +51,9 @@ void setup() {
 void handleSerialReceiveLine() {
   Line line;
   if (serialReceiveLine(&line)) {
-    redisTransmitLine(line);
+    redisAddLineToSendBuffer(line);
   } else {
-    sendStatusMessage("Invalid line data received from UX Arduino on Wifi Arduino");
+    fatalError("Invalid line data received from UX Arduino on Wifi Arduino");
   }
 }
 
@@ -59,6 +62,7 @@ void handleSerialReceive() {
   switch (opcode) {
     case -1:
       // No data received on serial line
+      Serial.println("Interrupt triggered but no serial data available");
       break;
     case SERIAL_COM_LINE_OPCODE:
       handleSerialReceiveLine();
@@ -113,7 +117,6 @@ void downloadInitialData() {
 }
 
 void loop() {
-  handleSerialReceive();
   handleRedisReceive();
   runRedisPeriodicTasks();
 

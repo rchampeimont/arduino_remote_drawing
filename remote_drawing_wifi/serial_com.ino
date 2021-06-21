@@ -7,6 +7,9 @@
 void serialInit() {
   Serial1.begin(115200, SERIAL_8E1);
 
+  // Used to trigger serial reception
+  pinMode(WIFI_ARDUINO_INTERRUPT_PIN, INPUT);
+
   // Leave some time for the UX Arduino to start up before sending serial data
   delay(5000);
 

@@ -10,6 +10,9 @@
 // This pin must be pulled LOW on one of the two Wifi Arduinos
 #define CLIENT_ID_PIN 5
 
+// Where to detect interrupts coming from the UX Arduino
+#define WIFI_ARDUINO_INTERRUPT_PIN 2
+
 extern byte myClientId;
 
 // Reboot the entire system (both Arduinos). This function never returns.

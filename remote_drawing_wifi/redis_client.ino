@@ -7,14 +7,19 @@
 #include "secrets.h"
 #include "pins.h"
 
-#define MAX_LINES_IN_SEND_BUFFER 400
+#define MAX_LINES_IN_SEND_BUFFER 200
 #define REDIS_TIMEOUT 5000 // ms
 #define SEND_BUFFER_EVERY 1000 // ms
 #define PING_EVERY 30000 // ms
 #define REDIS_CHANNEL "remote_drawing"
 
-int lineSendBufferIndex = 0;
-Line lineSendBuffer[MAX_LINES_IN_SEND_BUFFER];
+volatile byte currentBufferForWrite = 0;
+
+volatile Line lineSendBuffer0[MAX_LINES_IN_SEND_BUFFER / 2];
+volatile byte linesInBuffer0 = 0;
+volatile Line lineSendBuffer1[MAX_LINES_IN_SEND_BUFFER / 2];
+volatile byte linesInBuffer1 = 0;
+
 unsigned long lastSentBufferTime = millis();
 unsigned long lastPingTime = millis();
 
@@ -241,44 +246,81 @@ void redisReadArrayElement(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZ
   redisReceiveBinary(client, buf, dataLength, command);
 }
 
-void redisTransmitLine(Line line) {
-  // Add line in send buffer
-  lineSendBuffer[lineSendBufferIndex] = line;
-  lineSendBufferIndex++;
+// This function is called from interrupt
+void redisAddLineToSendBuffer(Line line) {
+  volatile Line* targetAddress;
+  volatile byte *linesInBufferAddress;
+  if (currentBufferForWrite == 0) {
+    targetAddress = lineSendBuffer0 + linesInBuffer0;
+    linesInBufferAddress = &linesInBuffer0;
+  } else {
+    targetAddress = lineSendBuffer1 + linesInBuffer1;
+    linesInBufferAddress = &linesInBuffer1;
+  }
 
-  if (lineSendBufferIndex >= MAX_LINES_IN_SEND_BUFFER) {
-    Serial.println("Send buffer full");
-    sendLinesInBuffer();
+  // Add line in send buffer
+  *((Line *) targetAddress) = line;
+  (*linesInBufferAddress)++;
+
+  if ((*linesInBufferAddress) >= MAX_LINES_IN_SEND_BUFFER) {
+    fatalError("Send buffer %d full", currentBufferForWrite);
   }
 }
 
 void sendLinesInBuffer() {
-  if (lineSendBufferIndex > 0) {
-    Serial.write("Sending buffer (");
-    Serial.print(lineSendBufferIndex);
-    Serial.println(" lines)...");
-    unsigned long start = millis();
-    int newSize = redisBatchRPUSH("remote_drawing_lines", (byte *) lineSendBuffer, sizeof(Line), lineSendBufferIndex);
-    unsigned long end = millis();
-    Serial.write("Buffer sent (took ");
-    Serial.print(end - start);
-    Serial.println(" ms).");
-
-    int newLinesStartIndex = newSize - lineSendBufferIndex;
-    int newLinesStopIndex = newSize - 1;
-
-    // Now tell tell the channel that we transmitted this data
-    start = millis();
-    // Our convention is to transmit the indices of the added array range
-    int message[3] = { myClientId, newLinesStartIndex, newLinesStopIndex };
-    redisPUBLISH(REDIS_CHANNEL, (byte *) message, sizeof(message));
-    end = millis();
-    Serial.write("Sent message on pub/sub (took ");
-    Serial.print(end - start);
-    Serial.println(" ms).");
-
-    lineSendBufferIndex = 0;
+  if (linesInBuffer0 == 0 && linesInBuffer1 == 0) {
+    // nothing to send
+    return;
   }
+
+  // First, change the write pointer so that received data now goes to the other buffer.
+  // Since the writes are triggered by interrupt they can happen while this function is running.
+  currentBufferForWrite = currentBufferForWrite == 1 ? 0 : 1;
+
+  volatile Line *bufferToRead;
+  volatile byte *linesInBufferAddress;
+  if (currentBufferForWrite == 0) {
+    bufferToRead = lineSendBuffer1;
+    linesInBufferAddress = &linesInBuffer1;
+  } else {
+    bufferToRead = lineSendBuffer0;
+    linesInBufferAddress = &linesInBuffer0;
+  }
+
+  if (*linesInBufferAddress == 0) {
+    fatalError("Internal bug: non-empty buffer is the wrong one");
+  }
+
+  Serial.write("Sending buffer (");
+  Serial.print(*linesInBufferAddress);
+  Serial.println(" lines)...");
+  unsigned long start = millis();
+  int newSize = redisBatchRPUSH(
+                  "remote_drawing_lines",
+                  (byte *) bufferToRead,
+                  sizeof(Line),
+                  *linesInBufferAddress);
+  unsigned long end = millis();
+  Serial.write("Buffer sent (took ");
+  Serial.print(end - start);
+  Serial.println(" ms).");
+
+  // Compute the array index interval on the server where we just wrote our data
+  int newLinesStartIndex = newSize - *linesInBufferAddress;
+  int newLinesStopIndex = newSize - 1;
+
+  // Now tell the other client where is the new data we addded
+  start = millis();
+  // Our convention is to transmit the indices of the added array range
+  int message[3] = { myClientId, newLinesStartIndex, newLinesStopIndex };
+  redisPUBLISH(REDIS_CHANNEL, (byte *) message, sizeof(message));
+  end = millis();
+  Serial.write("Sent message on pub/sub (took ");
+  Serial.print(end - start);
+  Serial.println(" ms).");
+
+  // Mark the sent buffer as empty
+  *linesInBufferAddress = 0;
 }
 
 void runRedisPeriodicTasks() {
