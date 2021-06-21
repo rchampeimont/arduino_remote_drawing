@@ -28,6 +28,8 @@ void setup() {
   Serial.println("Arduino restarted.");
   Serial.println("Setting up...");
 
+  initClientId();
+
   // Init serial connection to the other Arduino
   serialInit();
 

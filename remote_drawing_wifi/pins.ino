@@ -1,6 +1,17 @@
 #include "pins.h"
 #include "serial_com.h"
 
+byte clientId = -1;
+
+void initClientId() {
+  pinMode(CLIENT_ID_PIN, INPUT_PULLUP);
+  if (digitalRead(CLIENT_ID_PIN) == LOW) {
+    clientId = 0;
+  } else {
+    clientId = 1;
+  }
+}
+
 void reboot() {
   sendStatusMessage("Rebooting...");
   delay(1000);

@@ -10,7 +10,8 @@ void serialInit() {
   // Leave some time for the UX Arduino to start up before sending serial data
   delay(5000);
 
-  sendStatusMessage("Hello received from Wifi Arduino");
+  sendStatusMessageFormat("Hello received from Wifi Arduino. I am client %d.", clientId);
+  delay(1000);
 
   // Clear any remaining displayed drawing from previous run.
   serialTransmitClear();
