@@ -64,7 +64,7 @@ void handleSerialReceive() {
       handleSerialReceiveLine();
       break;
     default:
-      sendStatusMessageFormat("Wifi Arduino received invalid opcode on serial line: %d", opcode);
+      fatalError("Wifi Arduino received invalid opcode on serial line: %d", opcode);
   }
 }
 
