@@ -300,9 +300,8 @@ void redisDownloadLine(int *x0, int *y0, int *x1, int *y1) {
 
   redisReadArrayElement(&mainClient, buf, "LRANGE");
 
-  // TODO avoid  memcpy calls
-  memcpy(x0, buf, 2);
-  memcpy(y0, buf + 2, 2);
-  memcpy(x1, buf + 4, 2);
-  memcpy(y1, buf + 6, 2);
+  *x0 = *((int *) buf);
+  *y0 = *((int *) buf + 1);
+  *x1 = *((int *) buf + 2);
+  *y1 = *((int *) buf + 3);
 }
