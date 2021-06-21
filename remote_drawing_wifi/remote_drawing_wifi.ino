@@ -15,7 +15,6 @@
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
 
   // Serial connection to computer, used for debug only
   Serial.begin(9600);
@@ -44,7 +43,6 @@ void setup() {
 
   Serial.println("Setup finished.");
   Serial.println("====================================================");
-  digitalWrite(LED_BUILTIN, LOW);
 }
 
 // Handle a drawn line received from "our" UX Arduino
@@ -127,6 +125,8 @@ void loop() {
     delay(5000);
     reboot();
   }
+
+  Serial.println("Alive");
 
   delay(1000);
 }
