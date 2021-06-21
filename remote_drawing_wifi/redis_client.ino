@@ -8,14 +8,19 @@
 #include "pins.h"
 
 #define MAX_LINES_IN_SEND_BUFFER 500
-#define LINE_SIZE_BYTES 8
 #define REDIS_TIMEOUT 5000 // ms
 #define SEND_BUFFER_EVERY 1000 // ms
 #define REDIS_CHANNEL "remote_drawing"
 
+typedef struct {
+  int x0;
+  int y0;
+  int x1;
+  int y1;
+} Line;
+
 int lineSendBufferIndex = 0;
-const int LINE_SEND_BUFFER_SIZE_BYTES = LINE_SIZE_BYTES * MAX_LINES_IN_SEND_BUFFER;
-byte lineSendBuffer[LINE_SEND_BUFFER_SIZE_BYTES];
+Line lineSendBuffer[MAX_LINES_IN_SEND_BUFFER];
 unsigned long lastSentBufferTime = millis();
 
 // Used to run commands
@@ -242,13 +247,14 @@ void redisReadArrayElement(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZ
 }
 
 void redisTransmitLine(int x0, int y0, int x1, int y1) {
-  int a[4] = { x0, y0, x1, y1 };
-
   // Add line in send buffer
-  memcpy(lineSendBuffer + lineSendBufferIndex, a, LINE_SIZE_BYTES);
-  lineSendBufferIndex += LINE_SIZE_BYTES;
+  lineSendBuffer[lineSendBufferIndex].x0 = x0;
+  lineSendBuffer[lineSendBufferIndex].y0 = y0;
+  lineSendBuffer[lineSendBufferIndex].x1 = x1;
+  lineSendBuffer[lineSendBufferIndex].y1 = y1;
+  lineSendBufferIndex++;
 
-  if (lineSendBufferIndex >= LINE_SEND_BUFFER_SIZE_BYTES) {
+  if (lineSendBufferIndex >= MAX_LINES_IN_SEND_BUFFER) {
     Serial.println("Send buffer full");
     sendLinesInBuffer();
   }
@@ -260,7 +266,7 @@ void sendLinesInBuffer() {
     Serial.print(lineSendBufferIndex);
     Serial.println(" lines)...");
     unsigned long start = millis();
-    int newSize = redisBatchRPUSH("remote_drawing_lines", lineSendBuffer, LINE_SIZE_BYTES, lineSendBufferIndex);
+    int newSize = redisBatchRPUSH("remote_drawing_lines", (byte *) lineSendBuffer, sizeof(Line), lineSendBufferIndex);
     unsigned long end = millis();
     Serial.write("Buffer sent (took ");
     Serial.print(end - start);
