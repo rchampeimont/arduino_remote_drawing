@@ -319,9 +319,6 @@ int redisPing(WiFiClient *client, bool subscribed) {
   }
   unsigned long end = millis();
   ping = end - start;
-  Serial.write("Ping: ");
-  Serial.print(ping);
-  Serial.println(" ms");
   return ping;
 }
 
