@@ -34,7 +34,7 @@ void reboot() {
 
   // We should now have rebooted, but if not, report the issue
   sendStatusMessage("System failed to reboot. Please disconnect and reconnect power.");
-  while(1);
+  while (1);
 }
 
 void aliveReceived() {
@@ -42,12 +42,13 @@ void aliveReceived() {
 }
 
 void checkAlive() {
-  if (noResponseFromUxArduinoSeconds < 255) {
-    noResponseFromUxArduinoSeconds++;
-  }
-  if (noResponseFromUxArduinoSeconds > DECLARE_UX_ARDUINO_DEAD_AFTER) {
+  if (noResponseFromUxArduinoSeconds >= DECLARE_UX_ARDUINO_DEAD_AFTER) {
     Serial.write("UX Arduino has not reported being alive for ");
     Serial.print(noResponseFromUxArduinoSeconds);
     Serial.println(" seconds");
+  }
+
+  if (noResponseFromUxArduinoSeconds < 255) {
+    noResponseFromUxArduinoSeconds++;
   }
 }

@@ -59,6 +59,8 @@ byte selectedColor = 0;
 void setup() {
   serialInit();
 
+  pinMode(RESET_CIRCUIT_OTHER, OUTPUT);
+
   tft.begin(RA8875_800x480);
 
   tft.displayOn(true);
@@ -103,12 +105,15 @@ void handleReceive() {
     switch (packet.opcode) {
       case SERIAL_COM_LINE_OPCODE:
         drawBigLine(packet.data.line);
+        aliveReceived();
         break;
       case SERIAL_COM_MSG_OPCODE:
         printStatus(packet.data.statusMessage);
+        aliveReceived();
         break;
       case SERIAL_COM_CLEAR_OPCODE:
         clearDisplayedDrawing();
+        aliveReceived();
         break;
       case SERIAL_COM_ALIVE_OPCODE:
         aliveReceived();

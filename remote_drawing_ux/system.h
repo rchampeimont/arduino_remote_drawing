@@ -15,9 +15,9 @@
 #define WIFI_ARDUINO_INTERRUPT_PIN 2
 
 // Pin tied to the other ("Wifi") Arduino reset circuit
-#define RESET_PIN_OTHER 7
+#define RESET_CIRCUIT_OTHER 7
 
-// Report that an "alive" signal was received from the other serial-connected Arduino
+// Record that the Wifi Arduino is alive
 void aliveReceived();
 
 // Check the Wifi Arduino is alive. To call every 1 second.
