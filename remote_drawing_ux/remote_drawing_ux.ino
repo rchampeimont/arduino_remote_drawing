@@ -82,45 +82,33 @@ void drawBigLine(Line line) {
 }
 
 
-void handleReceiveLine() {
-  Line line;
-  if (serialReceiveLine(&line)) {
-    drawBigLine(line);
-  } else {
-    printStatus("Invalid line data received on UX Arduino");
-  }
-}
-
-void handleReceiveStatusMessage() {
-  char msg[MAX_STATUS_MESSAGE_BUFFER_SIZE];
-  serialReceiveStatusMessage(msg);
-  printStatus(msg);
-}
-
 void clearDisplayedDrawing() {
   tft.fillRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT - STATUS_BAR_SIZE, RA8875_WHITE);
 }
 
 
 void handleReceive() {
-  int opcode = serialReceiveOpCode();
-  switch (opcode) {
-    case -1:
-      // No data received on serial line
-      break;
-    case SERIAL_COM_LINE_OPCODE:
-      handleReceiveLine();
-      break;
-    case SERIAL_COM_MSG_OPCODE:
-      handleReceiveStatusMessage();
-      break;
-    case SERIAL_COM_CLEAR_OPCODE:
-      clearDisplayedDrawing();
-      break;
-    default:
-      char errorMsg[SERIAL_COM_MSG_OPCODE];
-      snprintf(errorMsg, SERIAL_COM_MSG_OPCODE, "UX Arduino received invalid opcode on serial line: %d", opcode);
-      printStatus(errorMsg);
+  while (Serial.available() >= (int) sizeof(Packet)) {
+    Packet packet;
+    if (serialReceivePacket(&packet) == 0) {
+      printStatus("UX Arduino failed to read serial packet");
+      return;
+    }
+    switch (packet.opcode) {
+      case SERIAL_COM_LINE_OPCODE:
+        drawBigLine(packet.data.line);
+        break;
+      case SERIAL_COM_MSG_OPCODE:
+        printStatus(packet.data.statusMessage);
+        break;
+      case SERIAL_COM_CLEAR_OPCODE:
+        clearDisplayedDrawing();
+        break;
+      default:
+        char errorMsg[MAX_STATUS_MESSAGE_BUFFER_SIZE];
+        snprintf(errorMsg, MAX_STATUS_MESSAGE_BUFFER_SIZE, "UX Arduino received invalid opcode on serial line: %d", packet.opcode);
+        printStatus(errorMsg);
+    }
   }
 }
 

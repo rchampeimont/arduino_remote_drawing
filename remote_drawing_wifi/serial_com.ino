@@ -21,11 +21,18 @@ void serialInit() {
 }
 
 void sendStatusMessage(const char *msg) {
-  Serial1.write(SERIAL_COM_MSG_OPCODE);
-  Serial1.write((byte *) msg, strlen(msg) + 1);
+  Packet packet;
 
+  // Print on serial console for debug (if connected by USB)
   Serial.print("MSG: ");
   Serial.println(msg);
+
+  // Send to other Arduino for display in status bar
+  initPacket(&packet);
+  packet.opcode = SERIAL_COM_MSG_OPCODE;
+  strncpy(packet.data.statusMessage, msg, MAX_STATUS_MESSAGE_BUFFER_SIZE);
+  packet.data.statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE - 1] = '\0';
+  serialTransmitPacket(packet);
 }
 
 void sendStatusMessageFormat(const char *format, ...) {
@@ -44,7 +51,7 @@ void fatalError(const char *format, ...) {
   va_list args;
   va_start(args, format);
   vsnprintf(buf, MAX_STATUS_MESSAGE_BUFFER_SIZE, format, args);
-  for (int i=60; i>0; i--) {
+  for (int i = 60; i > 0; i--) {
     snprintf(bufFinal, MAX_STATUS_MESSAGE_BUFFER_SIZE, "%s - Rebooting in %d seconds...", buf, i);
     sendStatusMessage(bufFinal);
     delay(1000);
@@ -53,24 +60,35 @@ void fatalError(const char *format, ...) {
   va_end(args);
 }
 
-void serialTransmitLine(Line line) {
-  Serial1.write(SERIAL_COM_LINE_OPCODE);
-  Serial1.write((byte*) &line, sizeof(Line));
+void initPacket(Packet *packet) {
+  // Zero unused fields to allow for simpler debug
+  // when looking at the serial data with an oscilloscope.
+  memset(packet, 0, sizeof(Packet));
 }
 
-int serialReceiveLine(Line *line) {
-  if (Serial1.readBytes((byte*) line, sizeof(Line)) == sizeof(Line)) {
+void serialTransmitPacket(Packet packet) {
+  Serial1.write((byte*) &packet, sizeof(Packet));
+}
+
+int serialReceivePacket(Packet *packetAddr) {
+  if (Serial1.readBytes((byte *) packetAddr, sizeof(Packet)) == sizeof(Packet)) {
     return 1;
   } else {
     return 0;
   }
 }
 
-int serialReceiveOpCode() {
-  int opcode = Serial1.read();
-  return opcode;
+void serialTransmitLine(Line line) {
+  Packet packet;
+  initPacket(&packet);
+  packet.opcode = SERIAL_COM_LINE_OPCODE;
+  packet.data.line = line;
+  serialTransmitPacket(packet);
 }
 
 void serialTransmitClear() {
-  Serial1.write(SERIAL_COM_CLEAR_OPCODE);
+  Packet packet;
+  initPacket(&packet);
+  packet.opcode = SERIAL_COM_CLEAR_OPCODE;
+  serialTransmitPacket(packet);
 }

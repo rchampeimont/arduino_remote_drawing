@@ -5,16 +5,25 @@
 #define SERIAL_COM_MSG_OPCODE 'M'
 #define SERIAL_COM_CLEAR_OPCODE 'C'
 
+#define MAX_STATUS_MESSAGE_BUFFER_SIZE 60
+
 typedef struct {
   int x0;
   int y0;
   int x1;
   int y1;
-  byte color;
+  byte color; // an index in the COLORS constant array
 } Line;
 
-// With the default font, 100 characters per line can be displayed exactly.
-#define MAX_STATUS_MESSAGE_BUFFER_SIZE 101
+typedef union {
+  Line line;
+  char statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE];
+} DataInPacket;
+
+typedef struct {
+  byte opcode;
+  DataInPacket data;
+} Packet;
 
 // Inits the serial communication with the UX Arduino
 void serialInit();
@@ -28,10 +37,12 @@ void sendStatusMessageFormat(const char *format, ...);
 // Like sendStatusMessageFormat(), but reboots after.
 void fatalError(const char *format, ...);
 
-// These functions are the same as the ones wiuth the same names in the UX Arduino
+
 void serialTransmitLine(Line line);
-int serialReceiveLine(Line *line);
-int serialReceiveOpCode();
+
+void serialTransmitClear();
+
+int serialReceivePacket(Packet *packetAddr);
 
 // Clear drawing
 void serialTransmitClear();

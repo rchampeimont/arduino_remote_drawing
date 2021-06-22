@@ -5,6 +5,8 @@
 #define SERIAL_COM_MSG_OPCODE 'M'
 #define SERIAL_COM_CLEAR_OPCODE 'C'
 
+#define MAX_STATUS_MESSAGE_BUFFER_SIZE 60
+
 typedef struct {
   int x0;
   int y0;
@@ -13,21 +15,20 @@ typedef struct {
   byte color; // an index in the COLORS constant array
 } Line;
 
-// With the default font, 100 characters per line can be displayed exactly.
-#define MAX_STATUS_MESSAGE_BUFFER_SIZE 101
+typedef union {
+  Line line;
+  char statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE];
+} DataInPacket;
+
+typedef struct {
+  byte opcode;
+  DataInPacket data;
+} Packet;
 
 void serialInit();
 
-// Receive a status message from the Wifi Arduino, to display in the status bar
-int serialReceiveStatusMessage(char msg[MAX_STATUS_MESSAGE_BUFFER_SIZE]);
-
-// Transmit a line drawn by the user
 void serialTransmitLine(Line line);
 
-// Receive a line from the Wifi Arduino
-int serialReceiveLine(Line *line);
-
-// Try to receive the next instruction
-int serialReceiveOpCode();
+int serialReceivePacket(Packet *packetAddr);
 
 #endif

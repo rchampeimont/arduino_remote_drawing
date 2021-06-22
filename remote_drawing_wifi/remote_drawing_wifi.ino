@@ -16,7 +16,7 @@
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  
+
   pinMode(DEBUG_PIN, OUTPUT);
 
   // Serial connection to computer, used for debug only
@@ -49,16 +49,6 @@ void setup() {
   digitalWrite(LED_BUILTIN, LOW);
 }
 
-// Handle a drawn line received from "our" UX Arduino
-void handleSerialReceiveLine() {
-  Line line;
-  if (serialReceiveLine(&line)) {
-    redisAddLineToSendBuffer(line);
-  } else {
-    fatalError("Invalid line data received from UX Arduino on Wifi Arduino");
-  }
-}
-
 // This function is an Interrupt Service Routine (ISR)
 void handleSerialReceive() {
   // This allows to measure time spent in ISR with an oscilloscope
@@ -66,11 +56,21 @@ void handleSerialReceive() {
 
   // We cannot wait for data in an ISR,
   // so we need to make sure the packet is already completely received
-  while (Serial1.available() >= 1 + (int) sizeof(Line)) {
-    serialReceiveOpCode();
-    handleSerialReceiveLine();
+  while (Serial1.available() >= (int) sizeof(Packet)) {
+    Packet packet;
+    if (serialReceivePacket(&packet) == 0) {
+      fatalError("UX Arduino failed to read serial packet");
+      return;
+    }
+    switch (packet.opcode) {
+      case SERIAL_COM_LINE_OPCODE:
+        redisAddLineToSendBuffer(packet.data.line);
+        break;
+      default:
+        fatalError("UX Arduino received invalid opcode on serial line: %d", packet.opcode);
+    }
   }
-  
+
   digitalWrite(DEBUG_PIN, LOW);
 }
 
