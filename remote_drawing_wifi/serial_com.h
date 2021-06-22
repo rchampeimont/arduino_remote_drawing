@@ -4,6 +4,7 @@
 #define SERIAL_COM_LINE_OPCODE 'L'
 #define SERIAL_COM_MSG_OPCODE 'M'
 #define SERIAL_COM_CLEAR_OPCODE 'C'
+#define SERIAL_COM_ALIVE_OPCODE 'A'
 
 #define MAX_STATUS_MESSAGE_BUFFER_SIZE 60
 
@@ -48,5 +49,8 @@ int serialReceivePacket(Packet *packetAddr);
 
 // Clear drawing
 void serialTransmitClear();
+
+// Tell the other Arduino that we are alive
+void serialTransmitAlive();
 
 #endif

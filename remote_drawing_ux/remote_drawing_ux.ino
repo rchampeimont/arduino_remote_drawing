@@ -1,9 +1,12 @@
 // Program designed for Arduino Uno Rev3
 
 #include "Adafruit_RA8875.h"
-#include "pins.h"
+#include "system.h"
 #include "calibrate.h"
 #include "serial_com.h"
+
+// Period for telling the other Arduino that we are alive
+#define TELL_ALIVE_EVERY 1000
 
 // TFT Display resolution
 const int DISPLAY_WIDTH = 800;
@@ -47,6 +50,9 @@ unsigned long lastLinePointTime = 0;
 
 // We use 0 as meaning "not released"
 unsigned long penReleaseTime = 1;
+
+// Last Alive packet sent
+unsigned long lastAliveSentTime = millis();
 
 byte selectedColor = 0;
 
@@ -104,10 +110,11 @@ void handleReceive() {
       case SERIAL_COM_CLEAR_OPCODE:
         clearDisplayedDrawing();
         break;
+      case SERIAL_COM_ALIVE_OPCODE:
+        aliveReceived();
+        break;
       default:
-        char errorMsg[MAX_STATUS_MESSAGE_BUFFER_SIZE];
-        snprintf(errorMsg, MAX_STATUS_MESSAGE_BUFFER_SIZE, "UX Arduino received invalid opcode on serial line: %d", packet.opcode);
-        printStatus(errorMsg);
+        printStatusFormat("UX Arduino received invalid opcode on serial line: 0x%x", packet.opcode);
     }
   }
 }
@@ -245,7 +252,28 @@ void printStatus(const char* msg) {
   tft.graphicsMode();
 }
 
+// Like printStatus() but takes printf()-like arguments
+void printStatusFormat(const char *format, ...) {
+  char buf[MAX_STATUS_MESSAGE_BUFFER_SIZE];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buf, MAX_STATUS_MESSAGE_BUFFER_SIZE, format, args);
+  printStatus(buf);
+  va_end(args);
+}
+
 void loop() {
   handleTouch();
   handleReceive();
+  
+  unsigned long now = millis();
+  if (now >= lastAliveSentTime + TELL_ALIVE_EVERY) {
+    // Tell the other Arduino we are still alive
+    serialTransmitAlive();
+
+    // Check that the other Arduino is still alive
+    checkAlive();
+
+    lastAliveSentTime = now;
+  }
 }

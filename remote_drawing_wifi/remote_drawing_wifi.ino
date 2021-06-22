@@ -7,7 +7,7 @@
 #include "serial_com.h"
 #include "secrets.h"
 #include "redis_client.h"
-#include "pins.h"
+#include "system.h"
 
 // Reboot every day to avoid issues linked with millis() overflow
 // and for safety if we get stuck in a bad state.
@@ -35,14 +35,14 @@ void setup() {
   // Init serial connection to the other Arduino
   serialInit();
 
-
-  attachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN), handleSerialReceive, FALLING);
-
   initWifi();
 
   connectToRedisServer();
 
   downloadInitialData();
+
+  // Start receiving data from UX Arduino
+  attachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN), handleSerialReceive, FALLING);
 
   Serial.println("Setup finished.");
   Serial.println("====================================================");
@@ -66,8 +66,11 @@ void handleSerialReceive() {
       case SERIAL_COM_LINE_OPCODE:
         redisAddLineToSendBuffer(packet.data.line);
         break;
+      case SERIAL_COM_ALIVE_OPCODE:
+        aliveReceived();
+        break;
       default:
-        fatalError("UX Arduino received invalid opcode on serial line: %d", packet.opcode);
+        fatalError("UX Arduino received invalid opcode on serial line: 0x%x", packet.opcode);
     }
   }
 
@@ -129,7 +132,12 @@ void loop() {
     reboot();
   }
 
-  Serial.println("Alive");
+  Serial.println("I am alive.");
+  // Tell the UX Arduino we are alive
+  serialTransmitAlive();
+
+  // Check if the UX Arduino is alive
+  checkAlive();
 
   delay(1000);
 }

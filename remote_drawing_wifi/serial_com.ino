@@ -2,7 +2,7 @@
 
 #include <stdarg.h>
 #include "serial_com.h"
-#include "pins.h"
+#include "system.h"
 
 void serialInit() {
   Serial1.begin(115200, SERIAL_8E1);
@@ -93,5 +93,12 @@ void serialTransmitClear() {
   Packet packet;
   initPacket(&packet);
   packet.opcode = SERIAL_COM_CLEAR_OPCODE;
+  serialTransmitPacket(packet);
+}
+
+void serialTransmitAlive() {
+  Packet packet;
+  initPacket(&packet);
+  packet.opcode = SERIAL_COM_ALIVE_OPCODE;
   serialTransmitPacket(packet);
 }

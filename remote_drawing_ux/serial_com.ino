@@ -1,6 +1,6 @@
 // This file contains the code to communicate with the "Wifi" Arduino
 
-#include "pins.h"
+#include "system.h"
 #include "serial_com.h"
 
 void serialInit() {
@@ -42,5 +42,12 @@ void serialTransmitLine(Line line) {
   initPacket(&packet);
   packet.opcode = SERIAL_COM_LINE_OPCODE;
   packet.data.line = line;
+  serialTransmitPacket(packet);
+}
+
+void serialTransmitAlive() {
+  Packet packet;
+  initPacket(&packet);
+  packet.opcode = SERIAL_COM_ALIVE_OPCODE;
   serialTransmitPacket(packet);
 }

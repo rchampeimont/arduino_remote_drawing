@@ -5,7 +5,7 @@
 #include "redis_client.h"
 #include "serial_com.h"
 #include "secrets.h"
-#include "pins.h"
+#include "system.h"
 
 #define MAX_LINES_IN_SEND_BUFFER 200
 #define REDIS_TIMEOUT 5000 // ms

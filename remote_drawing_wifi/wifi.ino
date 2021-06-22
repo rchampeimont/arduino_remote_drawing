@@ -3,7 +3,7 @@
 #include "wifi.h"
 #include "secrets.h"
 #include "serial_com.h"
-#include "pins.h"
+#include "system.h"
 
 char targetWifiSSID[] = WIFI_NAME;
 char targetWifiPassword[] = WIFI_PASSWORD;
