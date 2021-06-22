@@ -61,19 +61,14 @@ void handleSerialReceiveLine() {
 
 // This function is an Interrupt Service Routine (ISR)
 void handleSerialReceive() {
+  // This allows to measure time spent in ISR with an oscilloscope
   digitalWrite(DEBUG_PIN, HIGH);
-  
-  int opcode = serialReceiveOpCode();
-  switch (opcode) {
-    case -1:
-      // No data received on serial line
-      Serial.println("Interrupt triggered but no serial data available");
-      break;
-    case SERIAL_COM_LINE_OPCODE:
-      handleSerialReceiveLine();
-      break;
-    default:
-      fatalError("Wifi Arduino received invalid opcode on serial line: %d", opcode);
+
+  // We cannot wait for data in an ISR,
+  // so we need to make sure the packet is already completely received
+  while (Serial1.available() >= 1 + (int) sizeof(Line)) {
+    serialReceiveOpCode();
+    handleSerialReceiveLine();
   }
   
   digitalWrite(DEBUG_PIN, LOW);

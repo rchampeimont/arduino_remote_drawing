@@ -11,8 +11,8 @@ void serialInit() {
 }
 
 int serialReceiveStatusMessage(char msg[MAX_STATUS_MESSAGE_BUFFER_SIZE]) {
-  size_t readChars = Serial.readBytesUntil(0, msg, MAX_STATUS_MESSAGE_BUFFER_SIZE-1);
-  if (readChars >= MAX_STATUS_MESSAGE_BUFFER_SIZE-1) {
+  size_t readChars = Serial.readBytesUntil(0, msg, MAX_STATUS_MESSAGE_BUFFER_SIZE - 1);
+  if (readChars >= MAX_STATUS_MESSAGE_BUFFER_SIZE - 1) {
     // The message is too big, so we need to discard it until we reach NUL
     while (Serial.read() != 0);
     msg[MAX_STATUS_MESSAGE_BUFFER_SIZE - 1] = 0;
@@ -27,13 +27,15 @@ int serialReceiveStatusMessage(char msg[MAX_STATUS_MESSAGE_BUFFER_SIZE]) {
 }
 
 void serialTransmitLine(Line line) {
-  digitalWrite(WIFI_ARDUINO_INTERRUPT_PIN, HIGH);
-  
   Serial.write(SERIAL_COM_LINE_OPCODE);
   Serial.write((byte*) &line, sizeof(Line));
   Serial.flush();
 
-  // Tell the receiver to read the serial data now
+  // Tell the receiver to read the serial data now.
+  // The 1ms delay is necessary, otherwise the receiver
+  // is sometimes interrupted before the data is completly received.
+  digitalWrite(WIFI_ARDUINO_INTERRUPT_PIN, HIGH);
+  delay(1);
   digitalWrite(WIFI_ARDUINO_INTERRUPT_PIN, LOW);
 }
 
