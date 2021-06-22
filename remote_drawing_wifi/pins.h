@@ -13,6 +13,8 @@
 // Where to detect interrupts coming from the UX Arduino
 #define WIFI_ARDUINO_INTERRUPT_PIN 2
 
+#define DEBUG_PIN 12
+
 extern byte myClientId;
 
 // Reboot the entire system (both Arduinos). This function never returns.

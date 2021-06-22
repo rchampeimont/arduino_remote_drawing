@@ -15,6 +15,9 @@
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  
+  pinMode(DEBUG_PIN, OUTPUT);
 
   // Serial connection to computer, used for debug only
   Serial.begin(9600);
@@ -43,6 +46,7 @@ void setup() {
 
   Serial.println("Setup finished.");
   Serial.println("====================================================");
+  digitalWrite(LED_BUILTIN, LOW);
 }
 
 // Handle a drawn line received from "our" UX Arduino
@@ -57,6 +61,8 @@ void handleSerialReceiveLine() {
 
 // This function is an Interrupt Service Routine (ISR)
 void handleSerialReceive() {
+  digitalWrite(DEBUG_PIN, HIGH);
+  
   int opcode = serialReceiveOpCode();
   switch (opcode) {
     case -1:
@@ -69,6 +75,8 @@ void handleSerialReceive() {
     default:
       fatalError("Wifi Arduino received invalid opcode on serial line: %d", opcode);
   }
+  
+  digitalWrite(DEBUG_PIN, LOW);
 }
 
 void handleRedisReceive() {
