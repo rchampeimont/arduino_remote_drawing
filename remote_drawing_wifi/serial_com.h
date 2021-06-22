@@ -37,11 +37,13 @@ void sendStatusMessageFormat(const char *format, ...);
 // Like sendStatusMessageFormat(), but reboots after.
 void fatalError(const char *format, ...);
 
-
+// Transmit line to the UX Arduino to display it
 void serialTransmitLine(Line line);
 
+// Tell the UX Arduino to clear the screen
 void serialTransmitClear();
 
+// Receive a packet from the UX Arduino
 int serialReceivePacket(Packet *packetAddr);
 
 // Clear drawing

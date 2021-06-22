@@ -21,18 +21,12 @@ void serialInit() {
 }
 
 void sendStatusMessage(const char *msg) {
-  Packet packet;
-
   // Print on serial console for debug (if connected by USB)
   Serial.print("MSG: ");
   Serial.println(msg);
 
   // Send to other Arduino for display in status bar
-  initPacket(&packet);
-  packet.opcode = SERIAL_COM_MSG_OPCODE;
-  strncpy(packet.data.statusMessage, msg, MAX_STATUS_MESSAGE_BUFFER_SIZE);
-  packet.data.statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE - 1] = '\0';
-  serialTransmitPacket(packet);
+  serialTransmitStatusMessage(msg);
 }
 
 void sendStatusMessageFormat(const char *format, ...) {
@@ -76,6 +70,15 @@ int serialReceivePacket(Packet *packetAddr) {
   } else {
     return 0;
   }
+}
+
+void serialTransmitStatusMessage(const char *msg) {
+  Packet packet;
+  initPacket(&packet);
+  packet.opcode = SERIAL_COM_MSG_OPCODE;
+  strncpy(packet.data.statusMessage, msg, MAX_STATUS_MESSAGE_BUFFER_SIZE);
+  packet.data.statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE - 1] = '\0';
+  serialTransmitPacket(packet);
 }
 
 void serialTransmitLine(Line line) {
