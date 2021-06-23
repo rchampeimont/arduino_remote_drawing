@@ -10,10 +10,16 @@ I used this hardware:
 How to connect the Arduino Uno R3 to the RA8875 circuit:
 ![RA8875 connections](/schematics/RA8875.jpg?raw=true)
 
-The two Arduino need to be connected to each other using this circuit in both directions (so this circuit is present twice):
+The two Arduinos need to be connected to each other using this circuit in both directions (so this circuit is present twice):
 ![Reset circuit](/schematics/reset_circuit.jpg?raw=true)
-It allows each Arduino to reset the other Arduino.
+It allows each Arduino (A1 above) to reset the other Arduino (A2 above).
 
 This is useful for instance for crash detection and automatic reboot: Each Arduino pings the other every second. This allows each Arduino to detect when the other one is crashed, and reboot it.
 
-Why use this complex circuit and not simply connect pin 7 of one Arduino with the RESET pin of the other?
+Why use this complex circuit and not simply connect an output pin of one Arduino to the RESET pin of the other? If we did that, we would have the following issues:
+* When Arduino A1 above is resetting, it would temporarily pull pow the RESET pin of Arduino A2 low, triggering a reset on the other side. Since they are both connected to each other like this, this would result in a deadlock situation where every RESET pin is pulled low and no one "releases" it. To avoid that, we invert the logic: Arduino A1 pulls Pin 7 high to make A2 RESET pin go low. This inversion is accomplished with the NPN transistor.
+* When an Arduino is not connected to power, is just being connected, there are transitory artefactul variations on the pins (here pin 7), which can trigger a reboot. To get rid of these artefactual reboots, we charge a capacitor, and the RESET is triggered when the capacitor is sufficiently charged.
+* A last issue is that pulling high the RESET pin when we don't want a reset is that it prevents resets from the computer (via USB) or the reset button, which is really annoying for development. The diode prevents this issue, by making our circuit able to pull low but not high the reset pin.
+
+Here is what the circuit behavior look like when a reset on an Arduino is triggered by the other:
+![Pin 7 and RESET pin measures on an oscilloscope](/benchmarks/reboot%20system/20210622_190719.jpg?raw=true)
