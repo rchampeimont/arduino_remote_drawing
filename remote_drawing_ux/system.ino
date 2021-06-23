@@ -13,6 +13,7 @@ void aliveReceived() {
 void checkAlive() {
   if (noResponseFromWifiArduinoSeconds >= DECLARE_WIFI_ARDUINO_DEAD_AFTER) {
     printStatusFormat("Rebooting Wifi Arduino after %d seconds without signal", noResponseFromWifiArduinoSeconds);
+    delay(1000);
 
     resetOther();
 

@@ -5,6 +5,10 @@
 #include "system.h"
 
 void serialInit() {
+  Serial.print("Packet size is ");
+  Serial.print(sizeof(Packet));
+  Serial.println(" bytes.");
+  
   sendStatusMessageFormat("Hello received from Wifi Arduino. I am client %d.", myClientId);
 
   // Clear any remaining displayed drawing from previous run.
