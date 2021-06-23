@@ -59,8 +59,6 @@ byte selectedColor = 0;
 void setup() {
   pinMode(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, OUTPUT);
   pinMode(WIFI_ARDUINO_INTERRUPT_PIN, OUTPUT);
-  Serial.begin(115200, SERIAL_8E1);
-
   tft.begin(RA8875_800x480);
 
   tft.displayOn(true);
@@ -119,7 +117,9 @@ void handleReceive() {
         aliveReceived();
         break;
       default:
-        printStatusFormat("UX Arduino received invalid opcode on serial line: 0x%x", packet.opcode);
+        printStatusFormat("FATAL: Wifi->UX Arduino invalid opcode: 0x%x", packet.opcode);
+        delay(30000);
+        resetOther();
     }
   }
 }
@@ -277,7 +277,7 @@ void loop() {
     serialTransmitAlive();
 
     // Check that the other Arduino is still alive
-    checkAlive();
+    //checkAlive();
 
     lastAliveSentTime = now;
   }

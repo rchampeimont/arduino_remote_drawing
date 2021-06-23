@@ -45,6 +45,10 @@ void setup() {
 
   downloadInitialData();
 
+  // Empty serial read buffer
+  Serial1.end();
+  Serial1.begin(115200, SERIAL_8E1);
+
   // Start receiving data from UX Arduino
   attachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN), handleSerialReceive, FALLING);
 
@@ -74,7 +78,7 @@ void handleSerialReceive() {
         aliveReceived();
         break;
       default:
-        fatalError("Wifi Arduino received invalid opcode on serial line: 0x%x", packet.opcode);
+        fatalError("UX->Wifi Arduino invalid opcode: 0x%x", packet.opcode);
     }
   }
 
@@ -122,7 +126,7 @@ void downloadInitialData() {
 
   sendStatusMessageFormat("Downloading drawing from server (%d lines). Please wait...", count);
   getLinesFromRedisAndDrawThem(count);
-  sendStatusMessageFormat("Downloading drawing finished (%d lines). You can now draw things!", count);
+  sendStatusMessageFormat("Downloaded %d lines. You can now draw!", count);
 }
 
 void loop() {
@@ -140,7 +144,7 @@ void loop() {
 
   Serial.println("I am alive.");
   // Tell the UX Arduino we are alive
-  serialTransmitAlive();
+  //serialTransmitAlive();
 
   // Check if the UX Arduino is alive
   checkAlive();
