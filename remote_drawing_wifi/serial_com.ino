@@ -7,8 +7,8 @@
 void serialInit() {
   sendStatusMessageFormat("Hello received from Wifi Arduino. I am client %d.", myClientId);
 
-   // Clear any remaining displayed drawing from previous run.
-   serialTransmitClear();
+  // Clear any remaining displayed drawing from previous run.
+  serialTransmitClear();
 }
 
 void sendStatusMessage(const char *msg) {
