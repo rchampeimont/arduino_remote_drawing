@@ -277,7 +277,7 @@ void loop() {
     serialTransmitAlive();
 
     // Check that the other Arduino is still alive
-    //checkAlive();
+    checkAlive();
 
     lastAliveSentTime = now;
   }

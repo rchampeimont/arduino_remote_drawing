@@ -55,6 +55,8 @@ void fatalError(const char *format, ...) {
   // Stop ISR from running
   detachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN));
 
+  digitalWrite(DEBUG_PIN, HIGH);
+
   char buf[MAX_STATUS_MESSAGE_BUFFER_SIZE];
   char bufFinal[MAX_STATUS_MESSAGE_BUFFER_SIZE];
   va_list args;

@@ -59,9 +59,6 @@ void setup() {
 
 // This function is an Interrupt Service Routine (ISR)
 void handleSerialReceive() {
-  // This allows to measure time spent in ISR with an oscilloscope
-  digitalWrite(DEBUG_PIN, HIGH);
-
   // We cannot wait for data in an ISR,
   // so we need to make sure the packet is already completely received
   while (Serial1.available() >= (int) sizeof(Packet)) {
@@ -81,8 +78,6 @@ void handleSerialReceive() {
         fatalError("UX->Wifi Arduino invalid opcode: 0x%x", packet.opcode);
     }
   }
-
-  digitalWrite(DEBUG_PIN, LOW);
 }
 
 void handleRedisReceive() {
@@ -144,7 +139,7 @@ void loop() {
 
   Serial.println("I am alive.");
   // Tell the UX Arduino we are alive
-  //serialTransmitAlive();
+  serialTransmitAlive();
 
   // Check if the UX Arduino is alive
   checkAlive();
