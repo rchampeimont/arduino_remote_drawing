@@ -11,8 +11,7 @@
 
 // Reboot every day to avoid issues linked with millis() overflow
 // and for safety if we get stuck in a bad state.
-//#define REBOOT_EVERY_MS 86400000
-#define REBOOT_EVERY_MS 30000
+#define REBOOT_EVERY_MS 86400000
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);

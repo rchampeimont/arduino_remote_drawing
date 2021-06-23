@@ -1,7 +1,8 @@
 #include "system.h"
 #include "serial_com.h"
 
-#define DECLARE_UX_ARDUINO_DEAD_AFTER 1000
+// Reset the other Arduino if it does not report being alive for this number of seconds
+#define DECLARE_UX_ARDUINO_DEAD_AFTER 30
 
 byte myClientId = -1;
 

@@ -1,6 +1,7 @@
 #include "system.h"
 
-#define DECLARE_WIFI_ARDUINO_DEAD_AFTER 1000
+// Reset the other Arduino if it does not report being alive for this number of seconds
+#define DECLARE_WIFI_ARDUINO_DEAD_AFTER 30
 
 // Number of seconds for which the Wifi Arduino has not sent us "alive" signals
 volatile byte noResponseFromWifiArduinoSeconds = 0;
@@ -12,7 +13,7 @@ void aliveReceived() {
 void checkAlive() {
   if (noResponseFromWifiArduinoSeconds >= DECLARE_WIFI_ARDUINO_DEAD_AFTER) {
     printStatusFormat("Rebooting Wifi Arduino after %d seconds without signal", noResponseFromWifiArduinoSeconds);
-    
+
     resetOther();
 
     // Reset to zero to give so time for the rebooted Arduino to start
