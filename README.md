@@ -18,8 +18,8 @@ This is useful for instance for crash detection and automatic reboot: Each Ardui
 
 Why use this complex circuit and not simply connect an output pin of one Arduino to the RESET pin of the other? If we did that, we would have the following issues:
 * When Arduino A1 above is resetting, it would temporarily pull pow the RESET pin of Arduino A2 low, triggering a reset on the other side. Since they are both connected to each other like this, this would result in a deadlock situation where every RESET pin is pulled low and no one "releases" it. To avoid that, we invert the logic: Arduino A1 pulls Pin 7 high to make A2 RESET pin go low. This inversion is accomplished with the NPN transistor.
-* When an Arduino is not connected to power, is just being connected, there are transitory artefactul variations on the pins (here pin 7), which can trigger a reboot. To get rid of these artefactual reboots, we charge a capacitor, and the RESET is triggered when the capacitor is sufficiently charged.
-* A last issue is that pulling high the RESET pin when we don't want a reset is that it prevents resets from the computer (via USB) or the reset button, which is really annoying for development. The diode prevents this issue, by making our circuit able to pull low but not high the reset pin.
+* When an Arduino is not connected to power or is being connected, there are transitory artefactul voltage variations on the pins (here pin 7), which can trigger a reboot. To get rid of these artefactual reboots, we charge a capacitor, and the RESET is triggered when the capacitor is sufficiently charged.
+* A last issue is that pulling high the RESET pin (ie. when we don't want to trigger a reset from code) prevents resets from the computer via USB or the reset button, which is really annoying for development. The diode prevents this issue by making our circuit able to pull low but not high the reset pin.
 
-Here is what the circuit behavior look like when a reset on an Arduino is triggered by the other:
+Here is what the circuit behavior look like when a reset on one Arduino is triggered by the other:
 ![Pin 7 and RESET pin measures on an oscilloscope](/benchmarks/reboot%20system/20210622_190719.jpg?raw=true)
