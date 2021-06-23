@@ -7,7 +7,7 @@ I used this hardware:
 * Arduino Uno Rev3
 * Arduino Uno Wifi Rev2
 
-How to connect the Arduino Uno R3 to the RA8875 circuit:
+How to connect the Arduino Uno R3 (the "UX" Arduino) to the RA8875 circuit:
 ![RA8875 connections](/schematics/RA8875.jpg?raw=true)
 
 The two Arduinos need to be connected to each other using this circuit in both directions (so this circuit is present twice):
