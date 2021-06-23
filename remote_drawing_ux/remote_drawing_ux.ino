@@ -57,9 +57,9 @@ unsigned long lastAliveSentTime = millis();
 byte selectedColor = 0;
 
 void setup() {
-  serialInit();
-
-  pinMode(RESET_CIRCUIT_OTHER, OUTPUT);
+  pinMode(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, OUTPUT);
+  pinMode(WIFI_ARDUINO_INTERRUPT_PIN, OUTPUT);
+  Serial.begin(115200, SERIAL_8E1);
 
   tft.begin(RA8875_800x480);
 
@@ -75,6 +75,9 @@ void setup() {
   tft.fillScreen(RA8875_WHITE);
 
   printStatus("Copyright (c) 2021 Raphael Champeimont");
+
+  // Reset the "Wifi" Arduino so that it resends us the drawing
+  resetOther();
 }
 
 void drawBigLine(Line line) {
@@ -270,7 +273,7 @@ void printStatusFormat(const char *format, ...) {
 void loop() {
   handleTouch();
   handleReceive();
-  
+
   unsigned long now = millis();
   if (now >= lastAliveSentTime + TELL_ALIVE_EVERY) {
     // Tell the other Arduino we are still alive

@@ -1,11 +1,8 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-// Pin tied to its own reset pin ("Wifi" Arduino)
-#define RESET_PIN_SELF 6
-
-// Pin tied to the other Arduino reset pin ("UX" Arduino)
-#define RESET_PIN_OTHER 7
+// Pin tied to the other ("UX") Arduino reset circuit
+#define PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT 7
 
 // This pin must be pulled LOW on one of the two Wifi Arduinos
 #define CLIENT_ID_PIN 5
@@ -18,8 +15,8 @@
 // To distiguish this Wifi Arduino from the other Wifi Arduino
 extern byte myClientId;
 
-// Reboot the entire system (both Arduinos). This function never returns.
-void reboot();
+// Reset the other Arduino ("UX" Arduino)
+void resetOther();
 
 // Report that an "alive" signal was received from the other serial-connected Arduino
 // Can be called from ISR.
@@ -27,5 +24,8 @@ void aliveReceived();
 
 // Check the UX Arduino is alive. To call every 1 second.
 void checkAlive();
+
+// Report a fatal error and stop the system
+void fatalError(const char *format, ...);
 
 #endif

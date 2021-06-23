@@ -35,9 +35,6 @@ void sendStatusMessage(const char *msg);
 // Same as sendStatusMessage() but arguments as printf()
 void sendStatusMessageFormat(const char *format, ...);
 
-// Like sendStatusMessageFormat(), but reboots after.
-void fatalError(const char *format, ...);
-
 // Transmit line to the UX Arduino to display it
 void serialTransmitLine(Line line);
 

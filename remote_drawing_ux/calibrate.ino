@@ -36,7 +36,7 @@
 #include "Adafruit_RA8875.h"
 
 #include "calibrate.h"
-#include "pins.h"
+#include "system.h"
 
 
 extern Adafruit_RA8875 tft;

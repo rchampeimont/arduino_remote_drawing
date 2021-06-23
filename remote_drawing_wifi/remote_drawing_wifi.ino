@@ -11,13 +11,16 @@
 
 // Reboot every day to avoid issues linked with millis() overflow
 // and for safety if we get stuck in a bad state.
-#define REBOOT_EVERY_MS 86400000
+//#define REBOOT_EVERY_MS 86400000
+#define REBOOT_EVERY_MS 30000
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
   pinMode(DEBUG_PIN, OUTPUT);
+  pinMode(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, OUTPUT);
+  pinMode(WIFI_ARDUINO_INTERRUPT_PIN, INPUT);
 
   // Serial connection to computer, used for debug only
   Serial.begin(9600);
@@ -29,6 +32,8 @@ void setup() {
   Serial.println("====================================================");
   Serial.println("Arduino restarted.");
   Serial.println("Setting up...");
+
+  Serial1.begin(115200, SERIAL_8E1);
 
   initClientId();
 
@@ -70,7 +75,7 @@ void handleSerialReceive() {
         aliveReceived();
         break;
       default:
-        fatalError("UX Arduino received invalid opcode on serial line: 0x%x", packet.opcode);
+        fatalError("Wifi Arduino received invalid opcode on serial line: 0x%x", packet.opcode);
     }
   }
 
@@ -126,10 +131,12 @@ void loop() {
   sendLinesInBuffer();
   runRedisPeriodicTasks();
 
-  if (millis() > REBOOT_EVERY_MS) {
+  while (millis() > REBOOT_EVERY_MS) {
     sendStatusMessage("It's time for the periodic reboot! Please wait a minute...");
-    delay(5000);
-    reboot();
+    // The other Arduino is then going to reset us at boot
+    resetOther();
+    // Retry after 60 sec if reset failed
+    delay(60000);
   }
 
   Serial.println("I am alive.");

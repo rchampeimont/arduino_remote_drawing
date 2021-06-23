@@ -26,9 +26,6 @@ typedef struct {
   DataInPacket data;
 } Packet;
 
-// Inits the serial communication with the Wifi Arduino
-void serialInit();
-
 // Transmit a drawn line to the Wifi Arduino to send over the network
 void serialTransmitLine(Line line);
 

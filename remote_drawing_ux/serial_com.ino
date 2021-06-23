@@ -3,13 +3,6 @@
 #include "system.h"
 #include "serial_com.h"
 
-void serialInit() {
-  Serial.begin(115200, SERIAL_8E1);
-
-  // Used to trigger serial reception on the other side
-  pinMode(WIFI_ARDUINO_INTERRUPT_PIN, OUTPUT);
-}
-
 void initPacket(Packet *packet) {
   // Zero unused fields to allow for simpler debug
   // when looking at the serial data with an oscilloscope.
