@@ -6,7 +6,7 @@
 #define SERIAL_COM_CLEAR_OPCODE 'C'
 #define SERIAL_COM_ALIVE_OPCODE 'A'
 
-#define MAX_STATUS_MESSAGE_BUFFER_SIZE 60
+#define MAX_STATUS_MESSAGE_BUFFER_SIZE 30
 
 typedef struct {
   int x0;

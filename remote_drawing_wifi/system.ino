@@ -2,7 +2,7 @@
 #include "serial_com.h"
 
 // Reset the other Arduino if it does not report being alive for this number of seconds
-#define DECLARE_UX_ARDUINO_DEAD_AFTER 30
+#define DECLARE_UX_ARDUINO_DEAD_AFTER 60
 
 byte myClientId = -1;
 
@@ -40,15 +40,17 @@ void checkAlive() {
 
 void resetOther() {
   digitalWrite(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, HIGH);
-  // RC constant of circuit is 22 ms so this is far enough to fill the capacitor
-  delay(500);
-
+  // Wait 500 ms but without using delay() because it cannot be called from an ISR,
+  // and the function we are in might be called from an ISR.
+  // RC constant of circuit is 22 ms so 400 ms is far enough to fill the capacitor.
+  for (int i = 0; i < 50; i++) {
+    delayMicroseconds(10000); // 10 ms
+  }
   digitalWrite(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, LOW);
-  // RC constant of circuit is 1 sec so we wait 2 sec for a full capacitor unload
-  delay(2000);
 }
 
 // Report fatal error on status bar and reboot. This function never returns.
+// Can be called from an ISR.
 void fatalError(const char *format, ...) {
   // Stop ISR from running
   detachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN));
@@ -58,11 +60,19 @@ void fatalError(const char *format, ...) {
   va_list args;
   va_start(args, format);
   vsnprintf(buf, MAX_STATUS_MESSAGE_BUFFER_SIZE, format, args);
-  snprintf(bufFinal, MAX_STATUS_MESSAGE_BUFFER_SIZE, "%s - Rebooting...", buf);
+  snprintf(bufFinal, MAX_STATUS_MESSAGE_BUFFER_SIZE, "FATAL: %s", buf);
   sendStatusMessage(bufFinal);
   va_end(args);
 
-  // Stop everything. The other Arduino is going to reset us after detecting we are dead.
+  // Wait some time to let the user see the message.
+  // Wait 30 sec but without using delay() because it cannot be called from an ISR,
+  // and the function we are in might be called from an ISR.
+  for (int i = 0; i < 3000; i++) {
+    delayMicroseconds(10000); // 10 ms
+  }
+
+  // Reset the other Arduino, which is going to reset us after.
+  resetOther();
   delay(1000);
   while (1);
 }
