@@ -9,3 +9,11 @@ I used this hardware:
 
 How to connect the Arduino Uno R3 to the RA8875 circuit:
 ![RA8875 connections](/schematics/RA8875.jpg?raw=true)
+
+The two Arduino need to be connected to each other using this circuit in both directions (so this circuit is present twice):
+![Reset circuit](/schematics/reset_circuit.jpg?raw=true)
+It allows each Arduino to reset the other Arduino.
+
+This is useful for instance for crash detection and automatic reboot: Each Arduino pings the other every second. This allows each Arduino to detect when the other one is crashed, and reboot it.
+
+Why use this complex circuit and not simply connect pin 7 of one Arduino with the RESET pin of the other?
