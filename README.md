@@ -12,7 +12,7 @@ How to connect the Arduino Uno R3 (the "UX" Arduino) to the RA8875 circuit:
 
 The two Arduinos need to be connected to each other using this circuit in both directions (so this circuit is present twice):
 ![Reset circuit](/schematics/reset_circuit.jpg?raw=true)
-It allows each Arduino (Arduino 1 above) to reset the other Arduino (Arduino 2 above).
+It allows each Arduino (Arduino 1 above) to reset the other Arduino (Arduino 2 above). The optional part with an LED is if you want to see when a reset is triggered (LED will be on for 1/2 second).
 
 This is useful for instance for crash detection and automatic reboot: Each Arduino pings the other every second. This allows each Arduino to detect when the other one is crashed, and reboot it.
 
