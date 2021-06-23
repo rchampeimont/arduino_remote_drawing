@@ -15,7 +15,7 @@
 // To distiguish this Wifi Arduino from the other Wifi Arduino
 extern byte myClientId;
 
-// Reset the other Arduino ("UX" Arduino)
+// Reset the other Arduino ("UX" Arduino), which will then reset us (cf. its setup() code)
 void resetOther();
 
 // Report that an "alive" signal was received from the other serial-connected Arduino
