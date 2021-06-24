@@ -16,21 +16,32 @@ typedef struct {
   byte color; // an index in the COLORS constant array
 } Line;
 
+
+// Received packets can contain status message, while sent packet cannot contain any
 typedef union {
   Line line;
   char statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE];
-} DataInPacket;
+} DataInReceivedPacket;
+
+typedef union {
+  Line line;
+} DataInSentPacket;
 
 typedef struct {
   byte opcode;
-  DataInPacket data;
-} Packet;
+  DataInReceivedPacket data;
+} ReceivedPacket;
+
+typedef struct {
+  byte opcode;
+  DataInSentPacket data;
+} SentPacket;
 
 // Transmit a drawn line to the Wifi Arduino to send over the network
 void serialTransmitLine(Line line);
 
 // Receive a packet from the Wifi Arduino
-int serialReceivePacket(Packet *packetAddr);
+int serialReceivePacket(ReceivedPacket *packetAddr);
 
 // Tell the other Arduino that we are alive
 void serialTransmitAlive();

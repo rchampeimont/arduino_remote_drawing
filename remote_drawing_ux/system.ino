@@ -38,5 +38,5 @@ void resetOther() {
   delay(500);
   digitalWrite(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, LOW);
 
-  Serial.begin(1000000, SERIAL_8E1);
+  Serial.begin(115200, SERIAL_8E1);
 }

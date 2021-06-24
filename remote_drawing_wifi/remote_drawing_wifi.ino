@@ -33,7 +33,7 @@ void setup() {
   Serial.println("Arduino restarted.");
   Serial.println("Setting up...");
 
-  Serial1.begin(1000000, SERIAL_8E1);
+  Serial1.begin(115200, SERIAL_8E1);
 
   initClientId();
 
@@ -48,7 +48,7 @@ void setup() {
 
   // Empty serial read buffer
   Serial1.end();
-  Serial1.begin(1000000, SERIAL_8E1);
+  Serial1.begin(115200, SERIAL_8E1);
 
   // Start receiving data from UX Arduino
   attachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN), handleSerialReceive, FALLING);
@@ -64,8 +64,8 @@ void handleSerialReceive() {
   
   // We cannot wait for data in an ISR,
   // so we need to make sure the packet is already completely received
-  while (Serial1.available() >= (int) sizeof(Packet)) {
-    Packet packet;
+  while (Serial1.available() >= (int) sizeof(ReceivedPacket)) {
+    ReceivedPacket packet;
     if (serialReceivePacket(&packet) == 0) {
       fatalError("UX Arduino failed to read serial packet");
       return;
@@ -73,6 +73,7 @@ void handleSerialReceive() {
     switch (packet.opcode) {
       case SERIAL_COM_LINE_OPCODE:
         redisAddLineToSendBuffer(packet.data.line);
+        aliveReceived();
         break;
       case SERIAL_COM_ALIVE_OPCODE:
         aliveReceived();

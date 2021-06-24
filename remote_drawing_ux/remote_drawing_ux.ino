@@ -97,8 +97,8 @@ void clearDisplayedDrawing() {
 
 
 void handleReceive() {
-  while (Serial.available() >= (int) sizeof(Packet)) {
-    Packet packet;
+  while (Serial.available() >= (int) sizeof(ReceivedPacket)) {
+    ReceivedPacket packet;
     if (serialReceivePacket(&packet) == 0) {
       printStatus("UX Arduino failed to read serial packet");
       return;

@@ -5,8 +5,12 @@
 #include "system.h"
 
 void serialInit() {
-  Serial.print("Packet size is ");
-  Serial.print(sizeof(Packet));
+  Serial.print("UX to Wifi Arduino packet size is ");
+  Serial.print(sizeof(ReceivedPacket));
+  Serial.println(" bytes.");
+
+  Serial.print("Wifi to UX Arduino packet size is ");
+  Serial.print(sizeof(SentPacket));
   Serial.println(" bytes.");
   
   sendStatusMessageFormat("Hello received from Wifi Arduino. I am client %d.", myClientId);
@@ -35,18 +39,18 @@ void sendStatusMessageFormat(const char *format, ...) {
 
 
 
-void initPacket(Packet *packet) {
+void initPacket(SentPacket *packet) {
   // Zero unused fields to allow for simpler debug
   // when looking at the serial data with an oscilloscope.
-  memset(packet, 0, sizeof(Packet));
+  memset(packet, 0, sizeof(SentPacket));
 }
 
-void serialTransmitPacket(Packet packet) {
-  Serial1.write((byte*) &packet, sizeof(Packet));
+void serialTransmitPacket(SentPacket packet) {
+  Serial1.write((byte*) &packet, sizeof(SentPacket));
 }
 
-int serialReceivePacket(Packet *packetAddr) {
-  if (Serial1.readBytes((byte *) packetAddr, sizeof(Packet)) == sizeof(Packet)) {
+int serialReceivePacket(ReceivedPacket *packetAddr) {
+  if (Serial1.readBytes((byte *) packetAddr, sizeof(ReceivedPacket)) == sizeof(ReceivedPacket)) {
     return 1;
   } else {
     return 0;
@@ -54,7 +58,7 @@ int serialReceivePacket(Packet *packetAddr) {
 }
 
 void serialTransmitStatusMessage(const char *msg) {
-  Packet packet;
+  SentPacket packet;
   initPacket(&packet);
   packet.opcode = SERIAL_COM_MSG_OPCODE;
   strncpy(packet.data.statusMessage, msg, MAX_STATUS_MESSAGE_BUFFER_SIZE);
@@ -63,7 +67,7 @@ void serialTransmitStatusMessage(const char *msg) {
 }
 
 void serialTransmitLine(Line line) {
-  Packet packet;
+  SentPacket packet;
   initPacket(&packet);
   packet.opcode = SERIAL_COM_LINE_OPCODE;
   packet.data.line = line;
@@ -71,14 +75,14 @@ void serialTransmitLine(Line line) {
 }
 
 void serialTransmitClear() {
-  Packet packet;
+  SentPacket packet;
   initPacket(&packet);
   packet.opcode = SERIAL_COM_CLEAR_OPCODE;
   serialTransmitPacket(packet);
 }
 
 void serialTransmitAlive() {
-  Packet packet;
+  SentPacket packet;
   initPacket(&packet);
   packet.opcode = SERIAL_COM_ALIVE_OPCODE;
   serialTransmitPacket(packet);

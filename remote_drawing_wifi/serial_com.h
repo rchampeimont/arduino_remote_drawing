@@ -16,15 +16,25 @@ typedef struct {
   byte color; // an index in the COLORS constant array
 } Line;
 
+// Sent packets (to UX Arduino) can contain status message, unlike received packets.
+typedef union {
+  Line line;
+} DataInReceivedPacket;
+
 typedef union {
   Line line;
   char statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE];
-} DataInPacket;
+} DataInSentPacket;
 
 typedef struct {
   byte opcode;
-  DataInPacket data;
-} Packet;
+  DataInReceivedPacket data;
+} ReceivedPacket;
+
+typedef struct {
+  byte opcode;
+  DataInSentPacket data;
+} SentPacket;
 
 // Inits the serial communication with the UX Arduino
 void serialInit();
@@ -42,7 +52,7 @@ void serialTransmitLine(Line line);
 void serialTransmitClear();
 
 // Receive a packet from the UX Arduino
-int serialReceivePacket(Packet *packetAddr);
+int serialReceivePacket(ReceivedPacket *packetAddr);
 
 // Clear drawing
 void serialTransmitClear();

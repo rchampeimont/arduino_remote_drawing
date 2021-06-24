@@ -3,14 +3,14 @@
 #include "system.h"
 #include "serial_com.h"
 
-void initPacket(Packet *packet) {
+void initPacket(SentPacket *packet) {
   // Zero unused fields to allow for simpler debug
   // when looking at the serial data with an oscilloscope.
-  memset(packet, 0, sizeof(Packet));
+  memset(packet, 0, sizeof(SentPacket));
 }
 
-void serialTransmitPacket(Packet packet) {
-  Serial.write((byte*) &packet, sizeof(Packet));
+void serialTransmitPacket(SentPacket packet) {
+  Serial.write((byte*) &packet, sizeof(SentPacket));
   Serial.flush();
 
   // Tell the receiver to read the serial data now.
@@ -22,8 +22,8 @@ void serialTransmitPacket(Packet packet) {
 }
 
 
-int serialReceivePacket(Packet *packetAddr) {
-  if (Serial.readBytes((byte *) packetAddr, sizeof(Packet)) == sizeof(Packet)) {
+int serialReceivePacket(ReceivedPacket *packetAddr) {
+  if (Serial.readBytes((byte *) packetAddr, sizeof(ReceivedPacket)) == sizeof(ReceivedPacket)) {
     return 1;
   } else {
     return 0;
@@ -31,7 +31,7 @@ int serialReceivePacket(Packet *packetAddr) {
 }
 
 void serialTransmitLine(Line line) {
-  Packet packet;
+  SentPacket packet;
   initPacket(&packet);
   packet.opcode = SERIAL_COM_LINE_OPCODE;
   packet.data.line = line;
@@ -39,7 +39,7 @@ void serialTransmitLine(Line line) {
 }
 
 void serialTransmitAlive() {
-  Packet packet;
+  SentPacket packet;
   initPacket(&packet);
   packet.opcode = SERIAL_COM_ALIVE_OPCODE;
   serialTransmitPacket(packet);
