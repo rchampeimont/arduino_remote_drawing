@@ -1,7 +1,7 @@
 # arduino_remote_drawing
 An Arduino-based system to synchronize drawings on two remote touchscreens through a Redis server.
 
-Here is the general setup of the system:
+Here is the general overview of the whole system:
 ![General overview](/schematics/overview.jpg?raw=true)
 
 Each station is made of the following hardware (so you need all this twice):
@@ -13,10 +13,8 @@ Each station is made of the following hardware (so you need all this twice):
 Here is the complete schematic for one station:
 ![Complete schematic](/schematics/complete_schematic.png?raw=true)
 
-How to connect the Arduino Uno R3 (the "UX" Arduino) to the RA8875 circuit:
-![RA8875 connections](/schematics/RA8875.jpg?raw=true)
-
-The two Arduinos need to be connected to each other using this circuit in both directions (which is why this circuit is present twice):
+## More details on the "reset circuit"
+As you can see in the schematic above, this circuit is present twice:
 ![Reset circuit](/schematics/reset_circuit.jpg?raw=true)
 It allows each Arduino (Arduino 1 above) to reset the other Arduino (Arduino 2 above). The optional part with an LED is if you want to see when a reset is triggered (LED will be on for 1/2 second).
 
