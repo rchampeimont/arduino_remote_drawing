@@ -73,7 +73,6 @@ void handleSerialReceive() {
     switch (packet.opcode) {
       case SERIAL_COM_LINE_OPCODE:
         redisAddLineToSendBuffer(packet.data.line);
-        aliveReceived();
         break;
       case SERIAL_COM_ALIVE_OPCODE:
         aliveReceived();

@@ -18,7 +18,10 @@
 #define PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT 7
 
 // Alternates HIGH/LOW on each loop run
-#define DEBUG_LOOP_RUN_TIME_PIN 6
+#define DEBUG_LOOP_RUN_TIME_PIN A1
+
+// High if fatal error occurs
+#define DEBUG_CRASH_PIN A0
 
 // Record that the Wifi Arduino is alive
 void aliveReceived();

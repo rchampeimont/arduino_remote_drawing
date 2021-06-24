@@ -47,6 +47,12 @@ void initPacket(SentPacket *packet) {
 
 void serialTransmitPacket(SentPacket packet) {
   Serial1.write((byte*) &packet, sizeof(SentPacket));
+  
+  // The packets from Wifi to UX Arduino are really big,
+  // so only one can fit in the 64 bytes buffer. So we
+  // need to wait for the UX Arduino to process the packet
+  // before we send another one.
+  delayMicroseconds(10000);
 }
 
 int serialReceivePacket(ReceivedPacket *packetAddr) {
@@ -72,8 +78,6 @@ void serialTransmitLine(Line line) {
   packet.opcode = SERIAL_COM_LINE_OPCODE;
   packet.data.line = line;
   serialTransmitPacket(packet);
-  // Leave some time for the UX Arduino to render the line
-  delay(10);
 }
 
 void serialTransmitClear() {

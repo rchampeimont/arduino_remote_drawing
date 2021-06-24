@@ -62,6 +62,8 @@ void setup() {
   pinMode(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, OUTPUT);
   pinMode(WIFI_ARDUINO_INTERRUPT_PIN, OUTPUT);
   pinMode(DEBUG_LOOP_RUN_TIME_PIN, OUTPUT);
+  pinMode(DEBUG_CRASH_PIN, OUTPUT);
+  
   tft.begin(RA8875_800x480);
 
   tft.displayOn(true);
@@ -109,6 +111,10 @@ void handleReceive() {
     switch (packet.opcode) {
       case SERIAL_COM_LINE_OPCODE:
         drawBigLine(packet.data.line);
+        // While loading the initial drawing, the Wifi Arduino does not send
+        // "alive" packets yet, and sends only lines, so we must consider
+        // them as proof that the other Arduino is alive.
+        aliveReceived();
         break;
       case SERIAL_COM_MSG_OPCODE:
         printStatus(packet.data.statusMessage);
@@ -121,6 +127,7 @@ void handleReceive() {
         break;
       default:
         printStatusFormat("FATAL: Wifi->UX Arduino invalid opcode: 0x%x", packet.opcode);
+        digitalWrite(DEBUG_CRASH_PIN, HIGH);
         delay(30000);
         resetOther();
     }
