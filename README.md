@@ -1,5 +1,5 @@
 # arduino_remote_drawing
-An Arduino-based system to synchronize drawings on two remote touchscreen through a Redis server.
+An Arduino-based system to synchronize drawings on two remote touchscreens through a Redis server.
 
 Here is the general setup of the system:
 ![General overview](/schematics/overview.jpg?raw=true)
