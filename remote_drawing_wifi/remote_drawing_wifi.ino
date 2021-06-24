@@ -114,8 +114,6 @@ void getLinesFromRedisAndDrawThem(int count) {
     redisDownloadLine(&line);
     // Send line to UX Arduino to render it on screen
     serialTransmitLine(line);
-    // Leave some time for the UX Arduino to render the line
-    delay(10);
   }
 }
 

@@ -17,6 +17,9 @@
 // Pin tied to the other ("Wifi") Arduino reset circuit
 #define PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT 7
 
+// Alternates HIGH/LOW on each loop run
+#define DEBUG_LOOP_RUN_TIME_PIN 6
+
 // Record that the Wifi Arduino is alive
 void aliveReceived();
 

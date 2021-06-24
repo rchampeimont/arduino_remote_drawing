@@ -56,9 +56,12 @@ unsigned long lastAliveSentTime = millis();
 
 byte selectedColor = 0;
 
+bool debugLoopPinState = false;
+
 void setup() {
   pinMode(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, OUTPUT);
   pinMode(WIFI_ARDUINO_INTERRUPT_PIN, OUTPUT);
+  pinMode(DEBUG_LOOP_RUN_TIME_PIN, OUTPUT);
   tft.begin(RA8875_800x480);
 
   tft.displayOn(true);
@@ -268,6 +271,9 @@ void printStatusFormat(const char *format, ...) {
 }
 
 void loop() {
+  debugLoopPinState = !debugLoopPinState;
+  digitalWrite(DEBUG_LOOP_RUN_TIME_PIN, debugLoopPinState ? HIGH : LOW);
+  
   handleTouch();
   handleReceive();
 

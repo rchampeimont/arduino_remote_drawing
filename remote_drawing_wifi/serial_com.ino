@@ -12,7 +12,7 @@ void serialInit() {
   Serial.print("Wifi to UX Arduino packet size is ");
   Serial.print(sizeof(SentPacket));
   Serial.println(" bytes.");
-  
+
   sendStatusMessageFormat("Hello received from Wifi Arduino. I am client %d.", myClientId);
 
   // Clear any remaining displayed drawing from previous run.
@@ -72,6 +72,8 @@ void serialTransmitLine(Line line) {
   packet.opcode = SERIAL_COM_LINE_OPCODE;
   packet.data.line = line;
   serialTransmitPacket(packet);
+  // Leave some time for the UX Arduino to render the line
+  delay(10);
 }
 
 void serialTransmitClear() {
