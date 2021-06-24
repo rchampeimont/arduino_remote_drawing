@@ -10,7 +10,11 @@
 // Where to detect interrupts coming from the UX Arduino
 #define WIFI_ARDUINO_INTERRUPT_PIN 2
 
-#define DEBUG_PIN 12
+// High when we are in an ISR
+#define DEBUG_ISR_TIME_PIN 11
+
+// High if fatal error occurs
+#define DEBUG_CRASH_PIN 12
 
 // To distiguish this Wifi Arduino from the other Wifi Arduino
 extern byte myClientId;
@@ -27,5 +31,7 @@ void checkAlive();
 
 // Report a fatal error and stop the system
 void fatalError(const char *format, ...);
+
+extern volatile byte noResponseFromUxArduinoSeconds;
 
 #endif

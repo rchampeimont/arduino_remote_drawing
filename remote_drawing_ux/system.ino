@@ -5,34 +5,38 @@
 
 // Number of seconds for which the Wifi Arduino has not sent us "alive" signals
 volatile byte noResponseFromWifiArduinoSeconds = 0;
+unsigned long lastAliveReceived = millis();
 
 void aliveReceived() {
-  noResponseFromWifiArduinoSeconds = 0;
+  lastAliveReceived = millis();
 }
 
 void checkAlive() {
-  if (noResponseFromWifiArduinoSeconds >= DECLARE_WIFI_ARDUINO_DEAD_AFTER) {
-    printStatusFormat("Rebooting Wifi Arduino after %d seconds without signal", noResponseFromWifiArduinoSeconds);
+  unsigned long now = millis();
+  int noSignalSice = (int) ((now - lastAliveReceived) / 1000);
+  if (noSignalSice >= DECLARE_WIFI_ARDUINO_DEAD_AFTER) {
+    printStatusFormat("Rebooting Wifi Arduino after %d seconds without signal", noSignalSice);
     delay(1000);
 
     resetOther();
 
-    // Reset to zero to give so time for the rebooted Arduino to start
-    noResponseFromWifiArduinoSeconds = 0;
-  }
-
-  if (noResponseFromWifiArduinoSeconds < 255) {
-    noResponseFromWifiArduinoSeconds++;
+    // Reset the time without alive to give the other Arduino a new chance
+    lastAliveReceived = now;
   }
 }
 
 void resetOther() {
   Serial.end();
-  
+
+  // Make sure the capacitor is unloaded
+  digitalWrite(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, LOW);
+  // RC constant of circuit is 1 sec
+  delay(2000);
+
   digitalWrite(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, HIGH);
-  // RC constant of circuit is 22 ms so this is far enough to fill the capacitor
+  // RC constant of circuit is 22 ms so 500 ms this is far enough to fill the capacitor
   delay(500);
   digitalWrite(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, LOW);
-  
-  Serial.begin(115200, SERIAL_8E1);
+
+  Serial.begin(1000000, SERIAL_8E1);
 }

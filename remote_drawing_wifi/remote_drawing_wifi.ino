@@ -17,7 +17,8 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
-  pinMode(DEBUG_PIN, OUTPUT);
+  pinMode(DEBUG_ISR_TIME_PIN, OUTPUT);
+  pinMode(DEBUG_CRASH_PIN, OUTPUT);
   pinMode(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, OUTPUT);
   pinMode(WIFI_ARDUINO_INTERRUPT_PIN, INPUT);
 
@@ -32,7 +33,7 @@ void setup() {
   Serial.println("Arduino restarted.");
   Serial.println("Setting up...");
 
-  Serial1.begin(115200, SERIAL_8E1);
+  Serial1.begin(1000000, SERIAL_8E1);
 
   initClientId();
 
@@ -47,7 +48,7 @@ void setup() {
 
   // Empty serial read buffer
   Serial1.end();
-  Serial1.begin(115200, SERIAL_8E1);
+  Serial1.begin(1000000, SERIAL_8E1);
 
   // Start receiving data from UX Arduino
   attachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN), handleSerialReceive, FALLING);
@@ -59,6 +60,8 @@ void setup() {
 
 // This function is an Interrupt Service Routine (ISR)
 void handleSerialReceive() {
+  digitalWrite(DEBUG_ISR_TIME_PIN, HIGH);
+  
   // We cannot wait for data in an ISR,
   // so we need to make sure the packet is already completely received
   while (Serial1.available() >= (int) sizeof(Packet)) {
@@ -78,6 +81,8 @@ void handleSerialReceive() {
         fatalError("UX->Wifi Arduino invalid opcode: 0x%x", packet.opcode);
     }
   }
+
+  digitalWrite(DEBUG_ISR_TIME_PIN, LOW);
 }
 
 void handleRedisReceive() {
@@ -137,7 +142,10 @@ void loop() {
     delay(60000);
   }
 
-  Serial.println("I am alive.");
+  char s[100];
+  snprintf(s, sizeof(s), "I am alive. Last alive received %d seconds ago.\n", noResponseFromUxArduinoSeconds);
+  Serial.write(s);
+  
   // Tell the UX Arduino we are alive
   serialTransmitAlive();
 
