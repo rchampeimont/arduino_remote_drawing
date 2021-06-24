@@ -1,13 +1,16 @@
 # arduino_remote_drawing
-An Arduino-based system to synchronize drawings on two remote touchscreen through a Redis server.
+An Arduino-based system to synchronize drawings on two remote touchscreens through a Redis server.
+
+Here is the general setup of the system:
+![General overview](/schematics/overview.jpg?raw=true)
 
 Each station is made of the following hardware (so you need all this twice):
+* Arduino Uno Wifi Rev2
+* Arduino Uno Rev3
 * Adafruit RA8875 https://www.adafruit.com/product/1590
 * Adafruit 7.0" 40-pin TFT Display - 800x480 with Touchscreen https://www.adafruit.com/product/2354
-* Arduino Uno Rev3
-* Arduino Uno Wifi Rev2
 
-Here is the complete schematic:
+Here is the complete schematic for one station:
 ![Complete schematic](/schematics/complete_schematic.png?raw=true)
 
 How to connect the Arduino Uno R3 (the "UX" Arduino) to the RA8875 circuit:
