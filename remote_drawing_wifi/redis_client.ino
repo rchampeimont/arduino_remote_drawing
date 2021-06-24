@@ -329,7 +329,7 @@ void runRedisPeriodicTasks() {
   // Ping the server once in a while to check connection still works
   if (now >= lastPingTime + PING_EVERY) {
     int latency = redisPing(&mainClient);
-    sendStatusMessageFormat("Ping: %d ms", latency);
+    sendStatusMessageFormat("Redis ping: %d ms         Arduino uptime: %d min", latency, millis()/60000);
     lastPingTime = now;
   }
 }
