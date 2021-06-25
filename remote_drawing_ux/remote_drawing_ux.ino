@@ -8,8 +8,7 @@
 // Period for telling the other Arduino that we are alive
 #define TELL_ALIVE_EVERY 1000
 
-#define CHECK_PHOTOSENSOR_EVERY 1000
-#define NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE 5
+#define CHECK_PHOTOSENSOR_EVERY 60000
 
 // TFT Display resolution
 const int DISPLAY_WIDTH = 800;
@@ -58,8 +57,6 @@ unsigned long penReleaseTime = 1;
 unsigned long lastAliveSentTime = millis();
 
 // Photosensor
-int photosensorValues[NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE];
-byte photosensorIndex = 0;
 unsigned long lastPhotosensorCheckTime = millis();
 
 byte selectedColor = 0;
@@ -284,11 +281,6 @@ void printStatusFormat(const char *format, ...) {
 }
 
 void initBacklight() {
-  int initialValue = analogRead(PHOTOTRANSISTOR_PIN);
-  for (int i = 0; i < NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE ; i++) {
-    photosensorValues[i] = initialValue;
-  }
-
   tft.PWM1config(true, RA8875_PWM_CLK_DIV1024);
   updateBacklight();
 }
@@ -297,17 +289,11 @@ void initBacklight() {
 void updateBacklight() {
   //digitalWrite(DEBUG_SPECIFIC_PIN, HIGH);
 
-  photosensorValues[photosensorIndex] = analogRead(PHOTOTRANSISTOR_PIN);
-  photosensorIndex = (photosensorIndex + 1) % NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE;
-  int total = 0;
-  for (byte i = 0; i < NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE; i++) {
-    total += photosensorValues[i];
-  }
-  int photosensorAverage = total / NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE;
-  int pwmValue = constrain(map(photosensorAverage, 0, 900, 0, 255), 0, 255);
+  int photosensorValue = analogRead(PHOTOTRANSISTOR_PIN);
+  int pwmValue = constrain(map(photosensorValue, 0, 900, 0, 255), 0, 255);
   tft.PWM1out(pwmValue);
 
-  //printStatusFormat("Photosensor: %d => PWM: %d", photosensorAverage, pwmValue);
+  //printStatusFormat("Photosensor: %d => PWM: %d", photosensorValue, pwmValue);
   //digitalWrite(DEBUG_SPECIFIC_PIN, LOW);
 }
 
