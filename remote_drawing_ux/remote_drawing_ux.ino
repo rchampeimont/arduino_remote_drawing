@@ -8,8 +8,6 @@
 // Period for telling the other Arduino that we are alive
 #define TELL_ALIVE_EVERY 1000
 
-#define CHECK_PHOTOSENSOR_EVERY 60000
-
 // TFT Display resolution
 const int DISPLAY_WIDTH = 800;
 const int DISPLAY_HEIGHT = 480;
@@ -55,9 +53,6 @@ unsigned long penReleaseTime = 1;
 
 // Last Alive packet sent
 unsigned long lastAliveSentTime = millis();
-
-// Photosensor
-unsigned long lastPhotosensorCheckTime = millis();
 
 byte selectedColor = 0;
 
@@ -107,7 +102,7 @@ void clearDisplayedDrawing() {
 
 void handleReceive() {
   char statusMessage[MAX_STATUS_MESSAGE_LENGTH + 1];
-  
+
   while (Serial.available() >= (int) sizeof(ReceivedPacket)) {
     ReceivedPacket packet;
     if (serialReceivePacket(&packet, statusMessage)) {
@@ -280,22 +275,6 @@ void printStatusFormat(const char *format, ...) {
   va_end(args);
 }
 
-void initBacklight() {
-  tft.PWM1config(true, RA8875_PWM_CLK_DIV1024);
-  updateBacklight();
-}
-
-// Adjusts the backlight of the TFT screen according to a photosensor
-void updateBacklight() {
-  //digitalWrite(DEBUG_SPECIFIC_PIN, HIGH);
-
-  int photosensorValue = analogRead(PHOTOTRANSISTOR_PIN);
-  int pwmValue = constrain(map(photosensorValue, 0, 900, 0, 255), 0, 255);
-  tft.PWM1out(pwmValue);
-
-  //printStatusFormat("Photosensor: %d => PWM: %d", photosensorValue, pwmValue);
-  //digitalWrite(DEBUG_SPECIFIC_PIN, LOW);
-}
 
 void loop() {
   digitalWrite(DEBUG_LOOP_RUN_TIME_PIN, HIGH);
@@ -315,8 +294,5 @@ void loop() {
     lastAliveSentTime = now;
   }
 
-  if (now >= lastPhotosensorCheckTime + CHECK_PHOTOSENSOR_EVERY) {
-    updateBacklight();
-    lastPhotosensorCheckTime = now;
-  }
+  updateBacklightIfNecesary();
 }
