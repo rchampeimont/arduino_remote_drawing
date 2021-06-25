@@ -8,6 +8,9 @@
 // Period for telling the other Arduino that we are alive
 #define TELL_ALIVE_EVERY 1000
 
+#define CHECK_PHOTOSENSOR_EVERY 1000
+#define NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE 5
+
 // TFT Display resolution
 const int DISPLAY_WIDTH = 800;
 const int DISPLAY_HEIGHT = 480;
@@ -54,6 +57,11 @@ unsigned long penReleaseTime = 1;
 // Last Alive packet sent
 unsigned long lastAliveSentTime = millis();
 
+// Photosensor
+int photosensorValues[NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE];
+byte photosensorIndex = 0;
+unsigned long lastPhotosensorCheckTime = millis();
+
 byte selectedColor = 0;
 
 bool debugLoopPinState = false;
@@ -63,13 +71,14 @@ void setup() {
   pinMode(WIFI_ARDUINO_INTERRUPT_PIN, OUTPUT);
   pinMode(DEBUG_LOOP_RUN_TIME_PIN, OUTPUT);
   pinMode(DEBUG_CRASH_PIN, OUTPUT);
-  
+  pinMode(DEBUG_SPECIFIC_PIN, OUTPUT);
+
   tft.begin(RA8875_800x480);
 
   tft.displayOn(true);
   tft.GPIOX(true);      // Enable TFT - display enable tied to GPIOX
-  tft.PWM1config(true, RA8875_PWM_CLK_DIV1024); // PWM output for backlight
-  tft.PWM1out(255);
+
+  initBacklight();
 
   // Setup touch screen
   tft.touchEnable(true);
@@ -277,10 +286,38 @@ void printStatusFormat(const char *format, ...) {
   va_end(args);
 }
 
+void initBacklight() {
+  int initialValue = analogRead(PHOTOTRANSISTOR_PIN);
+  for (int i = 0; i < NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE ; i++) {
+    photosensorValues[i] = initialValue;
+  }
+
+  tft.PWM1config(true, RA8875_PWM_CLK_DIV1024);
+  updateBacklight();
+}
+
+// Adjusts the backlight of the TFT screen according to a photosensor
+void updateBacklight() {
+  //digitalWrite(DEBUG_SPECIFIC_PIN, HIGH);
+
+  photosensorValues[photosensorIndex] = analogRead(PHOTOTRANSISTOR_PIN);
+  photosensorIndex = (photosensorIndex + 1) % NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE;
+  int total = 0;
+  for (byte i = 0; i < NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE; i++) {
+    total += photosensorValues[i];
+  }
+  int photosensorAverage = total / NUMBER_OF_PHOTOSENSOR_VALUES_TO_AVERAGE;
+  int pwmValue = constrain(map(photosensorAverage, 0, 900, 0, 255), 0, 255);
+  tft.PWM1out(pwmValue);
+
+  //printStatusFormat("Photosensor: %d => PWM: %d", photosensorAverage, pwmValue);
+  //digitalWrite(DEBUG_SPECIFIC_PIN, LOW);
+}
+
 void loop() {
   debugLoopPinState = !debugLoopPinState;
   digitalWrite(DEBUG_LOOP_RUN_TIME_PIN, debugLoopPinState ? HIGH : LOW);
-  
+
   handleTouch();
   handleReceive();
 
@@ -293,5 +330,10 @@ void loop() {
     checkAlive();
 
     lastAliveSentTime = now;
+  }
+
+  if (now >= lastPhotosensorCheckTime + CHECK_PHOTOSENSOR_EVERY) {
+    updateBacklight();
+    lastPhotosensorCheckTime = now;
   }
 }
