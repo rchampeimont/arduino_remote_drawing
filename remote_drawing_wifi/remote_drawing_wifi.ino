@@ -13,6 +13,12 @@
 // and for safety if we get stuck in a bad state.
 #define REBOOT_EVERY_MS 86400000
 
+// Period for telling the other Arduino that we are alive
+#define TELL_ALIVE_EVERY 1000
+
+// Last Alive packet sent
+unsigned long lastAliveSentTime = millis();
+
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
@@ -61,7 +67,7 @@ void setup() {
 // This function is an Interrupt Service Routine (ISR)
 void handleSerialReceive() {
   digitalWrite(DEBUG_ISR_TIME_PIN, HIGH);
-  
+
   // We cannot wait for data in an ISR,
   // so we need to make sure the packet is already completely received
   while (Serial1.available() >= (int) sizeof(ReceivedPacket)) {
@@ -129,7 +135,6 @@ void downloadInitialData() {
 
 void loop() {
   handleRedisReceive();
-  sendLinesInBuffer();
   runRedisPeriodicTasks();
 
   while (millis() > REBOOT_EVERY_MS) {
@@ -140,15 +145,18 @@ void loop() {
     delay(60000);
   }
 
-  char s[100];
-  snprintf(s, sizeof(s), "I am alive. Last alive received %d seconds ago.\n", noResponseFromUxArduinoSeconds);
-  Serial.write(s);
-  
-  // Tell the UX Arduino we are alive
-  serialTransmitAlive();
+  unsigned long now = millis();
+  if (now >= lastAliveSentTime + TELL_ALIVE_EVERY) {
+    // Tell the UX Arduino we are alive
+    serialTransmitAlive();
 
-  // Check if the UX Arduino is alive
-  checkAlive();
+    // Check if the UX Arduino is alive
+    checkAlive();
 
-  delay(1000);
+    char s[100];
+    snprintf(s, sizeof(s), "I am alive. Last alive received %d seconds ago.\n", noResponseFromUxArduinoSeconds);
+    Serial.write(s);
+
+    lastAliveSentTime = now;
+  }
 }

@@ -8,6 +8,7 @@
 #include "system.h"
 
 #define MAX_LINES_IN_SEND_BUFFER 200
+#define SEND_BUFFER_EVERY 500 // ms
 #define REDIS_TIMEOUT 5000 // ms
 #define PING_EVERY 30000 // ms
 #define REDIS_CHANNEL "remote_drawing"
@@ -326,22 +327,38 @@ void sendLinesInBuffer() {
 
 void runRedisPeriodicTasks() {
   unsigned long now = millis();
+
+  // Send lines in buffer
+  if (now >= lastSentBufferTime + SEND_BUFFER_EVERY) {
+    sendLinesInBuffer();
+
+    lastSentBufferTime = now;
+  }
+
   // Ping the server once in a while to check connection still works
   if (now >= lastPingTime + PING_EVERY) {
-    int latency = redisPing(&mainClient);
-    sendStatusMessageFormat("Redis ping: %d ms         Arduino uptime: %d min", latency, millis()/60000);
+    int latency = redisPingMainClient();
+    sendStatusMessageFormat("Redis ping: %d ms         Arduino uptime: %d min", latency, millis() / 60000);
+
+    // Also ping the connection where we are subscribed
+    // TODO redisPingSubClient();
+
     lastPingTime = now;
   }
 }
 
-int redisPing(WiFiClient *client) {
+int redisPingMainClient() {
   int ping;
   unsigned long start = millis();
-  client->write("PING\r\n");
-  expectRedisResponse(client, "PING", "+PONG");
+  mainClient.write("PING\r\n");
+  expectRedisResponse(&mainClient, "PING", "+PONG");
   unsigned long end = millis();
   ping = end - start;
   return ping;
+}
+
+void redisPingSubClient() {
+  subClient.write("PING\r\n");
 }
 
 int redisDownloadLinesBegin(int start, int stop) {
