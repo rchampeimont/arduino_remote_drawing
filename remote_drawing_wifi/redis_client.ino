@@ -13,15 +13,18 @@
 #define PING_EVERY 30000 // ms
 #define REDIS_CHANNEL "remote_drawing"
 
+// Send buffer stuff
 volatile byte currentBufferForWrite = 0;
-
 volatile Line lineSendBuffer0[MAX_LINES_IN_SEND_BUFFER];
 volatile byte linesInBuffer0 = 0;
 volatile Line lineSendBuffer1[MAX_LINES_IN_SEND_BUFFER];
 volatile byte linesInBuffer1 = 0;
-
 unsigned long lastSentBufferTime = millis();
-unsigned long lastPingTime = millis();
+
+// Ping-related stuff
+unsigned long lastPingTime = millis(); // When we last took care of ping stuff
+unsigned long subPingSentAt = 0; // Time when we sent the last PING in the subscription connection
+int lastMainPing = 0; // Last ping latency measured in ms
 
 // Used to run commands
 WiFiClient mainClient;
@@ -149,27 +152,46 @@ int redisReceiveMessage(int *fromClientId, int *newLinesStartIndex, int *newLine
 
   if (! subClient.available()) return 0;
 
-  expectRedisResponse(&subClient, "message", "*3");
-  expectRedisResponse(&subClient, "message", "$7");
-  expectRedisResponse(&subClient, "message", "message");
-  snprintf(s, sizeof(s), "$%d", strlen(REDIS_CHANNEL));
-  expectRedisResponse(&subClient, "message", s);
-  expectRedisResponse(&subClient, "message", REDIS_CHANNEL);
+  redisReceive(&subClient, (char *) buf, "subscription");
+  if (strcmp((char *) buf, "*3") == 0) {
+    // We are receiving a message from a publisher
+    expectRedisResponse(&subClient, "message", "$7");
+    expectRedisResponse(&subClient, "message", "message");
+    snprintf(s, sizeof(s), "$%d", strlen(REDIS_CHANNEL));
+    expectRedisResponse(&subClient, "message", s);
+    expectRedisResponse(&subClient, "message", REDIS_CHANNEL);
 
-  int dataLength = expectRedisBulkStringLength(&subClient, "message");
+    int dataLength = expectRedisBulkStringLength(&subClient, "message");
 
-  if (dataLength != 6) {
-    fatalError("Received Redis message has an unexpected size of %d bytes", dataLength);
+    if (dataLength != 6) {
+      fatalError("Received Redis message has an unexpected size of %d bytes", dataLength);
+    }
+
+    // Read the actual message
+    redisReceiveBinary(&subClient, buf, dataLength, "message");
+
+    *fromClientId = *((int *) buf);
+    *newLinesStartIndex = *((int *) buf + 1);
+    *newLinesStopIndex = *((int *) buf + 2);
+
+    return 1;
+  } else if (strcmp((char *) buf, "*2") == 0) {
+    // We are receiving the response for a PING we sent
+    expectRedisResponse(&subClient, "pong", "$4");
+    expectRedisResponse(&subClient, "pong", "pong");
+    expectRedisResponse(&subClient, "pong", "$0");
+    expectRedisResponse(&subClient, "pong", "");
+    int subPing = millis() - subPingSentAt;
+    subPingSentAt = 0;
+
+    sendStatusMessageFormat("Redis ping: %d ms (main) %d ms (sub.)         Uptime: %d min", lastMainPing, subPing, millis() / 60000);
+
+    // Return 0 since we didn't write an actual message to the passed variables
+    return 0;
+  } else {
+    fatalError("Unexpected data in subscription: \"%s\"", buf);
+    return 0;
   }
-
-  // Read the actual message
-  redisReceiveBinary(&subClient, buf, dataLength, "message");
-
-  *fromClientId = *((int *) buf);
-  *newLinesStartIndex = *((int *) buf + 1);
-  *newLinesStopIndex = *((int *) buf + 2);
-
-  return 1;
 }
 
 // Execute the Redis RPUSH command.
@@ -337,28 +359,31 @@ void runRedisPeriodicTasks() {
 
   // Ping the server once in a while to check connection still works
   if (now >= lastPingTime + PING_EVERY) {
-    int latency = redisPingMainClient();
-    sendStatusMessageFormat("Redis ping: %d ms         Arduino uptime: %d min", latency, millis() / 60000);
-
-    // Also ping the connection where we are subscribed
-    // TODO redisPingSubClient();
+    // Ping both the main client and the subscription client
+    redisPingMainClient();
+    redisPingSubClient();
 
     lastPingTime = now;
   }
 }
 
-int redisPingMainClient() {
-  int ping;
+void redisPingMainClient() {
   unsigned long start = millis();
   mainClient.write("PING\r\n");
   expectRedisResponse(&mainClient, "PING", "+PONG");
-  unsigned long end = millis();
-  ping = end - start;
-  return ping;
+  lastMainPing = millis() - start;
 }
 
 void redisPingSubClient() {
-  subClient.write("PING\r\n");
+  if (subPingSentAt == 0) {
+    subPingSentAt = millis();
+    subClient.write("PING\r\n");
+  } else {
+    // If subPingSent is non-zero, we are still waiting for a response to a previous ping
+    if (millis() > subPingSentAt + REDIS_TIMEOUT) {
+      fatalError("No response to PING on Redis subscription connection");
+    }
+  }
 }
 
 int redisDownloadLinesBegin(int start, int stop) {
