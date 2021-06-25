@@ -36,4 +36,7 @@ void checkAlive();
 // Reset the other Arduino ("Wifi" Arduino)
 void resetOther();
 
+// Report an error on the status bar and reset the other Arduino
+void error(const char *format, ...);
+
 #endif

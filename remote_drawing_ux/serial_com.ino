@@ -22,9 +22,39 @@ void serialTransmitPacket(SentPacket packet) {
 }
 
 
-int serialReceivePacket(ReceivedPacket *packetAddr) {
+int serialReceivePacket(ReceivedPacket *packetAddr, char returnedMessage[MAX_STATUS_MESSAGE_LENGTH + 1]) {
+  // Since each status message is divided in several package,
+  // we concatenate them together in this variable.
+  // + 1 because we always have a \0 at the end
+  static char concatenatedStatusMessage[MAX_STATUS_MESSAGE_LENGTH + 1];
+
   if (Serial.readBytes((byte *) packetAddr, sizeof(ReceivedPacket)) == sizeof(ReceivedPacket)) {
-    return 1;
+    if (packetAddr->opcode == SERIAL_COM_MSG_OPCODE) {
+      if (packetAddr->data.statusMessage.offset == 0) {
+        // This is a new message, so clear the previous one
+        memset(concatenatedStatusMessage, 0, sizeof(concatenatedStatusMessage));
+      }
+      if (packetAddr->data.statusMessage.offset + STATUS_MESSAGE_SIZE_IN_PACKET > MAX_STATUS_MESSAGE_LENGTH) {
+        error("Too high offset for status message: %d", packetAddr->data.statusMessage.offset);
+        return 0;
+      } else {
+        memcpy(
+          concatenatedStatusMessage + packetAddr->data.statusMessage.offset,
+          packetAddr->data.statusMessage.part,
+          STATUS_MESSAGE_SIZE_IN_PACKET);
+        if (packetAddr->data.statusMessage.offset + STATUS_MESSAGE_SIZE_IN_PACKET == MAX_STATUS_MESSAGE_LENGTH) {
+          // We have received the end of a status message, so report to the caller that we have something
+          memcpy(returnedMessage, concatenatedStatusMessage, MAX_STATUS_MESSAGE_LENGTH + 1);
+          return 1;
+        } else {
+          // The status message is not complete yet, so tell the caller than we have nothing
+          return 0;
+        }
+      }
+    } else {
+      // Packet is not a status message
+      return 1;
+    }
   } else {
     return 0;
   }

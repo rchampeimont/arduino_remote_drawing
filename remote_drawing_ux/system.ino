@@ -40,3 +40,19 @@ void resetOther() {
 
   Serial.begin(115200, SERIAL_8E1);
 }
+
+void error(const char *format, ...) {
+  char buf[MAX_STATUS_MESSAGE_LENGTH + 1];
+  char bufFinal[MAX_STATUS_MESSAGE_LENGTH + 1];
+  va_list args;
+  
+  va_start(args, format);
+  vsnprintf(buf, MAX_STATUS_MESSAGE_LENGTH + 1, format, args);
+  snprintf(bufFinal, MAX_STATUS_MESSAGE_LENGTH + 1, "ERROR: %s", buf);
+  printStatus(bufFinal);
+  va_end(args);
+
+  digitalWrite(DEBUG_CRASH_PIN, HIGH);
+  delay(30000);
+  resetOther();
+}

@@ -29,10 +29,10 @@ void sendStatusMessage(const char *msg) {
 }
 
 void sendStatusMessageFormat(const char *format, ...) {
-  char buf[MAX_STATUS_MESSAGE_BUFFER_SIZE];
+  char buf[MAX_STATUS_MESSAGE_LENGTH + 1];
   va_list args;
   va_start(args, format);
-  vsnprintf(buf, MAX_STATUS_MESSAGE_BUFFER_SIZE, format, args);
+  vsnprintf(buf, MAX_STATUS_MESSAGE_LENGTH + 1, format, args);
   sendStatusMessage(buf);
   va_end(args);
 }
@@ -47,7 +47,7 @@ void initPacket(SentPacket *packet) {
 
 void serialTransmitPacket(SentPacket packet) {
   Serial1.write((byte*) &packet, sizeof(SentPacket));
-  
+
   // The packets from Wifi to UX Arduino are really big,
   // so only one can fit in the 64 bytes buffer. So we
   // need to wait for the UX Arduino to process the packet
@@ -63,13 +63,23 @@ int serialReceivePacket(ReceivedPacket *packetAddr) {
   }
 }
 
+// In this function we split the message to send in several smaller packets
+// that will be concatenated together by the receiver.
 void serialTransmitStatusMessage(const char *msg) {
   SentPacket packet;
-  initPacket(&packet);
-  packet.opcode = SERIAL_COM_MSG_OPCODE;
-  strncpy(packet.data.statusMessage, msg, MAX_STATUS_MESSAGE_BUFFER_SIZE);
-  packet.data.statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE - 1] = '\0';
-  serialTransmitPacket(packet);
+  byte messageBuffer[MAX_STATUS_MESSAGE_LENGTH];
+
+  // strncpy() does not put a \0 if there is no space for it,
+  // but this is exactly the behavior we want here.
+  strncpy((char *) messageBuffer, msg, MAX_STATUS_MESSAGE_LENGTH);
+
+  for (byte offset = 0; offset < MAX_STATUS_MESSAGE_LENGTH; offset += STATUS_MESSAGE_SIZE_IN_PACKET) {
+    initPacket(&packet);
+    packet.opcode = SERIAL_COM_MSG_OPCODE;
+    packet.data.statusMessage.offset = offset;
+    memcpy(packet.data.statusMessage.part, messageBuffer + offset, STATUS_MESSAGE_SIZE_IN_PACKET);
+    serialTransmitPacket(packet);
+  }
 }
 
 void serialTransmitLine(Line line) {

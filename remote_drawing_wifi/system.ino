@@ -57,12 +57,12 @@ void fatalError(const char *format, ...) {
 
   digitalWrite(DEBUG_CRASH_PIN, HIGH);
 
-  char buf[MAX_STATUS_MESSAGE_BUFFER_SIZE];
-  char bufFinal[MAX_STATUS_MESSAGE_BUFFER_SIZE];
+  char buf[MAX_STATUS_MESSAGE_LENGTH + 1];
+  char bufFinal[MAX_STATUS_MESSAGE_LENGTH + 1];
   va_list args;
   va_start(args, format);
-  vsnprintf(buf, MAX_STATUS_MESSAGE_BUFFER_SIZE, format, args);
-  snprintf(bufFinal, MAX_STATUS_MESSAGE_BUFFER_SIZE, "FATAL: %s", buf);
+  vsnprintf(buf, MAX_STATUS_MESSAGE_LENGTH + 1, format, args);
+  snprintf(bufFinal, MAX_STATUS_MESSAGE_LENGTH + 1, "FATAL: %s", buf);
   sendStatusMessage(bufFinal);
   va_end(args);
 

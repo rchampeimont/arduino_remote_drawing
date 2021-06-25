@@ -6,7 +6,12 @@
 #define SERIAL_COM_CLEAR_OPCODE 'C'
 #define SERIAL_COM_ALIVE_OPCODE 'A'
 
-#define MAX_STATUS_MESSAGE_BUFFER_SIZE 60
+// The maximum number of characters in a status message (not including the \0)
+// We can display exactly 100 characters on one line on the screen
+#define MAX_STATUS_MESSAGE_LENGTH 100
+
+// Each status message is divided in several packets
+#define STATUS_MESSAGE_SIZE_IN_PACKET 10
 
 typedef struct {
   int x0;
@@ -16,6 +21,11 @@ typedef struct {
   byte color; // an index in the COLORS constant array
 } Line;
 
+typedef struct {
+  byte offset;
+  byte part[STATUS_MESSAGE_SIZE_IN_PACKET];
+} StatusMessagePartInPacket;
+
 // Sent packets (to UX Arduino) can contain status message, unlike received packets.
 typedef union {
   Line line;
@@ -23,7 +33,7 @@ typedef union {
 
 typedef union {
   Line line;
-  char statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE];
+  StatusMessagePartInPacket statusMessage;
 } DataInSentPacket;
 
 typedef struct {

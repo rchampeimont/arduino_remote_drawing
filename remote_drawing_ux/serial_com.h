@@ -6,7 +6,12 @@
 #define SERIAL_COM_CLEAR_OPCODE 'C'
 #define SERIAL_COM_ALIVE_OPCODE 'A'
 
-#define MAX_STATUS_MESSAGE_BUFFER_SIZE 60
+// The maximum number of characters in a status message (not including the \0)
+// We can display exactly 100 characters on one line on the screen
+#define MAX_STATUS_MESSAGE_LENGTH 100
+
+// Each status message is divided in several packets
+#define STATUS_MESSAGE_SIZE_IN_PACKET 10
 
 typedef struct {
   int x0;
@@ -16,11 +21,15 @@ typedef struct {
   byte color; // an index in the COLORS constant array
 } Line;
 
+typedef struct {
+  byte offset;
+  byte part[STATUS_MESSAGE_SIZE_IN_PACKET];
+} StatusMessagePartInPacket;
 
-// Received packets can contain status message, while sent packet cannot contain any
+// Received packets can contain status message, unlike sent packets.
 typedef union {
   Line line;
-  char statusMessage[MAX_STATUS_MESSAGE_BUFFER_SIZE];
+  StatusMessagePartInPacket statusMessage;
 } DataInReceivedPacket;
 
 typedef union {
@@ -41,7 +50,7 @@ typedef struct {
 void serialTransmitLine(Line line);
 
 // Receive a packet from the Wifi Arduino
-int serialReceivePacket(ReceivedPacket *packetAddr);
+int serialReceivePacket(ReceivedPacket *packetAddr, char returnedMessage[MAX_STATUS_MESSAGE_LENGTH + 1]);
 
 // Tell the other Arduino that we are alive
 void serialTransmitAlive();

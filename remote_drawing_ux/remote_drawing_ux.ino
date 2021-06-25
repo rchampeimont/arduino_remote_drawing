@@ -64,8 +64,6 @@ unsigned long lastPhotosensorCheckTime = millis();
 
 byte selectedColor = 0;
 
-bool debugLoopPinState = false;
-
 void setup() {
   pinMode(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, OUTPUT);
   pinMode(WIFI_ARDUINO_INTERRUPT_PIN, OUTPUT);
@@ -111,37 +109,36 @@ void clearDisplayedDrawing() {
 
 
 void handleReceive() {
+  char statusMessage[MAX_STATUS_MESSAGE_LENGTH + 1];
+  
   while (Serial.available() >= (int) sizeof(ReceivedPacket)) {
     ReceivedPacket packet;
-    if (serialReceivePacket(&packet) == 0) {
-      printStatus("UX Arduino failed to read serial packet");
-      return;
-    }
-    switch (packet.opcode) {
-      case SERIAL_COM_LINE_OPCODE:
-        drawBigLine(packet.data.line);
-        // While loading the initial drawing, the Wifi Arduino does not send
-        // "alive" packets yet, and sends only lines, so we must consider
-        // them as proof that the other Arduino is alive.
-        aliveReceived();
-        break;
-      case SERIAL_COM_MSG_OPCODE:
-        printStatus(packet.data.statusMessage);
-        break;
-      case SERIAL_COM_CLEAR_OPCODE:
-        clearDisplayedDrawing();
-        break;
-      case SERIAL_COM_ALIVE_OPCODE:
-        aliveReceived();
-        break;
-      default:
-        printStatusFormat("FATAL: Wifi->UX Arduino invalid opcode: 0x%x", packet.opcode);
-        digitalWrite(DEBUG_CRASH_PIN, HIGH);
-        delay(30000);
-        resetOther();
+    if (serialReceivePacket(&packet, statusMessage)) {
+      switch (packet.opcode) {
+        case SERIAL_COM_LINE_OPCODE:
+          drawBigLine(packet.data.line);
+          // While loading the initial drawing, the Wifi Arduino does not send
+          // "alive" packets yet, and sends only lines, so we must consider
+          // them as proof that the other Arduino is alive.
+          aliveReceived();
+          break;
+        case SERIAL_COM_MSG_OPCODE:
+          printStatus(statusMessage);
+          break;
+        case SERIAL_COM_CLEAR_OPCODE:
+          clearDisplayedDrawing();
+          break;
+        case SERIAL_COM_ALIVE_OPCODE:
+          aliveReceived();
+          break;
+        default:
+          error("Wifi->UX Arduino invalid opcode: 0x%x", packet.opcode);
+      }
     }
   }
 }
+
+
 
 // Compute an approximate distance between (x1,y1) and (x2,y2)
 int approxDistance(int x1, int y1, int x2, int y2) {
@@ -278,10 +275,10 @@ void printStatus(const char* msg) {
 
 // Like printStatus() but takes printf()-like arguments
 void printStatusFormat(const char *format, ...) {
-  char buf[MAX_STATUS_MESSAGE_BUFFER_SIZE];
+  char buf[MAX_STATUS_MESSAGE_LENGTH + 1];
   va_list args;
   va_start(args, format);
-  vsnprintf(buf, MAX_STATUS_MESSAGE_BUFFER_SIZE, format, args);
+  vsnprintf(buf, MAX_STATUS_MESSAGE_LENGTH + 1, format, args);
   printStatus(buf);
   va_end(args);
 }
@@ -315,10 +312,10 @@ void updateBacklight() {
 }
 
 void loop() {
-  debugLoopPinState = !debugLoopPinState;
-  digitalWrite(DEBUG_LOOP_RUN_TIME_PIN, debugLoopPinState ? HIGH : LOW);
-
+  digitalWrite(DEBUG_LOOP_RUN_TIME_PIN, HIGH);
   handleTouch();
+
+  digitalWrite(DEBUG_LOOP_RUN_TIME_PIN, LOW);
   handleReceive();
 
   unsigned long now = millis();
