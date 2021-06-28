@@ -9,10 +9,7 @@
 
 #define MINIMUM_BRIGHTNESS_CHANGE 5
 
-unsigned long lastPhotosensorCheckTime = millis();
 byte brightnessValues[NUMBER_OF_BRIGHTNESS_VALUES_TO_AVERAGE];
-byte brightnessValueIndex = 0;
-byte actualBrightness = 0;
 
 // Return an optimal backlight brightness setting adjusted
 // with room luminosity measured with phototransistor.
@@ -33,6 +30,9 @@ void initBacklight() {
 
 // Adjusts the backlight of the TFT screen according to a photosensor
 void updateBacklight() {
+  static byte brightnessValueIndex = 0;
+  static byte actualBrightness = 0;
+
   // Add a new measure
   byte newValue = getOptimalBacklightFromSensor();
   brightnessValues[brightnessValueIndex] = newValue;
@@ -57,6 +57,8 @@ void updateBacklight() {
 }
 
 void updateBacklightIfNecesary() {
+  static unsigned long lastPhotosensorCheckTime = millis();
+
   unsigned long now = millis();
 
   if (now >= lastPhotosensorCheckTime + CHECK_PHOTOSENSOR_EVERY) {
