@@ -56,6 +56,7 @@ void fatalError(const char *format, ...) {
   detachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN));
 
   digitalWrite(DEBUG_CRASH_PIN, HIGH);
+  digitalWrite(READY_TO_DRAW_PIN, LOW);
 
   char buf[MAX_STATUS_MESSAGE_LENGTH + 1];
   char bufFinal[MAX_STATUS_MESSAGE_LENGTH + 1];
