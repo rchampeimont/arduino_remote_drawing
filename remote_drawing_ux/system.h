@@ -14,6 +14,9 @@
 // Pin which is connected to the pin declared as WIFI_ARDUINO_INTERRUPT_PIN on the Wifi Arduino
 #define WIFI_ARDUINO_INTERRUPT_PIN 2
 
+// The Wifi Arduino pulls it HIGH when it is ready to receive data
+#define READY_TO_DRAW_PIN 3
+
 // Pin tied to the other ("Wifi") Arduino reset circuit
 #define PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT 7
 

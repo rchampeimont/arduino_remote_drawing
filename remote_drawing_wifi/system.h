@@ -10,6 +10,9 @@
 // Where to detect interrupts coming from the UX Arduino
 #define WIFI_ARDUINO_INTERRUPT_PIN 2
 
+// To tell UX Arduino that we are ready to receive drawing data
+#define READY_TO_DRAW_PIN 3
+
 // High when we are in an ISR
 #define DEBUG_ISR_TIME_PIN 11
 

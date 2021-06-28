@@ -62,6 +62,7 @@ void setup() {
   pinMode(DEBUG_LOOP_RUN_TIME_PIN, OUTPUT);
   pinMode(DEBUG_CRASH_PIN, OUTPUT);
   pinMode(DEBUG_SPECIFIC_PIN, OUTPUT);
+  pinMode(READY_TO_DRAW_PIN, INPUT);
 
   tft.begin(RA8875_800x480);
 
@@ -174,6 +175,10 @@ void extractPoint(int x1, int y1, int x2, int y2, int x3, int y3, int *x, int *y
 void handleTouch() {
   uint16_t rawX, rawY;
   int lineX, lineY, newX, newY;
+
+  // Wifi Arduino is not ready to receive data, so don't allow user to draw
+  if (digitalRead(READY_TO_DRAW_PIN) == LOW) return;
+  
   if (tft.touched()) {
     penReleaseTime = 0;
     tft.touchRead(&rawX, &rawY);

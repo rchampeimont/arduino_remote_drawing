@@ -27,6 +27,7 @@ void setup() {
   pinMode(DEBUG_CRASH_PIN, OUTPUT);
   pinMode(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, OUTPUT);
   pinMode(WIFI_ARDUINO_INTERRUPT_PIN, INPUT);
+  pinMode(READY_TO_DRAW_PIN, OUTPUT);
 
   // Serial connection to computer, used for debug only
   Serial.begin(9600);
@@ -58,6 +59,9 @@ void setup() {
 
   // Start receiving data from UX Arduino
   attachInterrupt(digitalPinToInterrupt(WIFI_ARDUINO_INTERRUPT_PIN), handleSerialReceive, FALLING);
+
+  // Tell UX Arduino that it can now send data
+  digitalWrite(READY_TO_DRAW_PIN, HIGH);
 
   Serial.println("Setup finished.");
   Serial.println("====================================================");
