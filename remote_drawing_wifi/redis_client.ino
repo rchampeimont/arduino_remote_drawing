@@ -146,7 +146,7 @@ void redisReceiveBinary(WiFiClient *client, byte buf[REDIS_RECEIVE_BUFFER_SIZE],
 }
 
 // Try to receive Redis data if there is any, but don't wait for it
-int redisReceiveMessage(int *fromClientId, int *newLinesStartIndex, int *newLinesStopIndex) {
+int redisReceiveMessage(RedisMessage *redisMessage) {
   byte buf[REDIS_RECEIVE_BUFFER_SIZE];
   char s[10];
 
@@ -163,16 +163,12 @@ int redisReceiveMessage(int *fromClientId, int *newLinesStartIndex, int *newLine
 
     int dataLength = expectRedisBulkStringLength(&subClient, "message");
 
-    if (dataLength != 6) {
+    if (dataLength != sizeof(RedisMessage)) {
       fatalError("Received Redis message has an unexpected size of %d bytes", dataLength);
     }
 
     // Read the actual message
-    redisReceiveBinary(&subClient, buf, dataLength, "message");
-
-    *fromClientId = *((int *) buf);
-    *newLinesStartIndex = *((int *) buf + 1);
-    *newLinesStopIndex = *((int *) buf + 2);
+    redisReceiveBinary(&subClient, (byte *) redisMessage, dataLength, "message");
 
     return 1;
   } else if (strcmp((char *) buf, "*2") == 0) {
@@ -186,27 +182,12 @@ int redisReceiveMessage(int *fromClientId, int *newLinesStartIndex, int *newLine
 
     sendStatusMessageFormat("Redis ping: %d ms (main) %d ms (sub.)         Uptime: %d min", lastMainPing, subPing, millis() / 60000);
 
-    // Return 0 since we didn't write an actual message to the passed variables
+    // Return 0 since we didn't write an actual message to the passed variable
     return 0;
   } else {
     fatalError("Unexpected data in subscription: \"%s\"", buf);
     return 0;
   }
-}
-
-// Execute the Redis RPUSH command.
-// Value is contained in "buf" of size "bufsize"
-// Returns the number of elements in the array after the push
-int redisRPUSH(const char *key, byte buf[], int bufsize) {
-  mainClient.write("*3\r\n");
-  mainClient.write("$5\r\n");
-  mainClient.write("RPUSH\r\n");
-  mainClient.write("$"); mainClient.print(strlen(key)); mainClient.write("\r\n");
-  mainClient.write(key); mainClient.write("\r\n");
-  mainClient.write("$");  mainClient.print(bufsize); mainClient.write("\r\n");
-  mainClient.write(buf, bufsize); mainClient.write("\r\n");
-
-  return expectRedisInteger(&mainClient, "RPUSH");
 }
 
 // Execute the Redis DEL command
@@ -219,7 +200,6 @@ int redisDEL(const char *key) {
 
   return expectRedisInteger(&mainClient, "DEL");
 }
-
 
 int redisBatchRPUSH(const char *key, byte buf[], int elementSize, int numberOfElements) {
   mainClient.write("*"); mainClient.print(2 + numberOfElements); mainClient.write("\r\n");
@@ -344,18 +324,30 @@ void sendLinesInBuffer() {
   int newLinesStartIndex = newSize - *linesInBufferAddress;
   int newLinesStopIndex = newSize - 1;
 
-  // Now tell the other client where is the new data we addded
-  start = millis();
-  // Our convention is to transmit the indices of the added array range
-  int message[3] = { myClientId, newLinesStartIndex, newLinesStopIndex };
-  redisPUBLISH(REDIS_CHANNEL, (byte *) message, sizeof(message));
-  end = millis();
-  Serial.write("Sent message on pub/sub (took ");
-  Serial.print(end - start);
-  Serial.println(" ms).");
+  // Now tell the other client where the new data we addded is
+  RedisMessage redisMessage;
+  redisInitMessage(&redisMessage);
+  redisMessage.opcode = REDIS_LINE_OPCODE;
+  redisMessage.data.lineInterval.newLinesStartIndex = newLinesStartIndex;
+  redisMessage.data.lineInterval.newLinesStopIndex = newLinesStopIndex;
+  redisTransmitMessage(redisMessage);
 
   // Mark the sent buffer as empty
   *linesInBufferAddress = 0;
+}
+
+void redisInitMessage(RedisMessage *redisMessage) {
+  memset(redisMessage, 0, sizeof(RedisMessage));
+  redisMessage->fromClientId = myClientId;
+}
+
+void redisTransmitMessage(RedisMessage redisMessage) {
+  unsigned long start = millis();
+  redisPUBLISH(REDIS_CHANNEL, (byte *) &redisMessage, sizeof(RedisMessage));
+  unsigned long end = millis();
+  Serial.write("Sent message on pub/sub (took ");
+  Serial.print(end - start);
+  Serial.println(" ms).");
 }
 
 void redisPlanClearDrawing() {
@@ -369,8 +361,13 @@ void redisPlanClearDrawing() {
 
 void redisClearDrawing() {
   Serial.println("Clearing drawing on server...");
-  
+
   redisDEL(REDIS_LINES_KEY);
+
+  RedisMessage redisMessage;
+  redisInitMessage(&redisMessage);
+  redisMessage.opcode = REDIS_CLEAR_OPCODE;
+  redisTransmitMessage(redisMessage);
 
   // Reset askedClear flag
   askedClear = false;

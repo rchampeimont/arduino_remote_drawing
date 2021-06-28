@@ -3,10 +3,29 @@
 
 #define REDIS_RECEIVE_BUFFER_SIZE 100
 
+#define REDIS_LINE_OPCODE 'L'
+#define REDIS_CLEAR_OPCODE 'C'
+
+typedef struct {
+  int newLinesStartIndex;
+  int newLinesStopIndex;
+} RedisLinesInterval;
+
+// This union is trivial, but it clarifies that lineInterval is not always used
+typedef union {
+  RedisLinesInterval lineInterval;
+} RedisMessageData;
+
+typedef struct {
+  byte opcode;
+  int fromClientId;
+  RedisMessageData data;
+} RedisMessage;
+
 void connectToRedisServer();
 
 // Receive Redis data from the subscription channel if there is any
-int redisReceiveMessage(int *fromClientId, int *newLinesStartIndex, int *newLinesStopIndex);
+int redisReceiveMessage(RedisMessage *redisMessage);
 
 // Send lines in buffer if there are any
 void sendLinesInBuffer();

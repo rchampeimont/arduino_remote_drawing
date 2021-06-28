@@ -91,7 +91,8 @@ void drawBigLine(Line line) {
 
 
 void clearDisplayedDrawing() {
-  tft.fillRect(0, 0, DRAWABLE_WIDTH, DRAWABLE_HEIGHT, RA8875_WHITE);
+  tft.fillRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT - STATUS_BAR_SIZE, RA8875_WHITE);
+  renderToolbar();
 }
 
 
@@ -194,20 +195,26 @@ void handleTouch() {
         && newX >= 0
         && newY >= 0
         && newX < DISPLAY_WIDTH
-        && newY < DRAWABLE_HEIGHT) {
+        && newY < DISPLAY_HEIGHT) {
 
       if (beforeLastTouchX >= 0 && lastTouchX >= 0) {
+        // Compute high-precision coordinates of clicked point by averaging successive coordinates
         extractPoint(beforeLastTouchX, beforeLastTouchY, lastTouchX, lastTouchY, newX, newY, &lineX, &lineY);
 
         unsigned long now = millis();
-        if (lastLineX >= 0) {
+        if (newX >= DRAWABLE_WIDTH || newY >= DRAWABLE_HEIGHT) {
+          // We are oustide the drawable area, so try to detect a click on a button
+          // Avoid repeating click on button
+          if (! buttonPressed) {
+            handleToolbarClick(newX, newY);
+          }
+          buttonPressed = true;
+          lastLineX = -1;
+          lastLineY = -1;
+        } else if (lastLineX >= 0) {
           // We are continuing a line.
-          if (
-            // Limit the number of line points generated per second, to optimize bandwidth
-            now >= lastLinePointTime + POINT_SAMPLING_PERIOD
-            // Check we are not on toolbar
-            && newX < DRAWABLE_WIDTH
-          ) {
+          // Limit the number of line points generated per second, to optimize bandwidth
+          if (now >= lastLinePointTime + POINT_SAMPLING_PERIOD) {
             Line line;
             line.x0 = lastLineX;
             line.y0 = lastLineY;
@@ -222,13 +229,6 @@ void handleTouch() {
             lastLineY = lineY;
             lastLinePointTime = now;
           }
-        } else if (newX >= DRAWABLE_WIDTH) {
-          // Click happened on the toolbar
-          // Avoid repeating click on button
-          if (! buttonPressed) {
-            handleToolbarClick(newX, newY);
-          }
-          buttonPressed = true;
         } else {
           // This is the first point of the line, so let's draw a single point
           // because the user might want to draw a single point and release the pen.

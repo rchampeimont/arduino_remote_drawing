@@ -5,8 +5,7 @@
 #define STATUS_BAR_BGCOLOR 0b0000000000001111
 #define TOOLBAR_BGCOLOR 0xA514
 
-#define STRING_ON_CLEAR_BUTTON "DEL"
-#define BUTTON_MARGIN 4
+#define STRING_ON_CLEAR_BUTTON "CLEAR"
 
 typedef struct {
   int16_t x;

@@ -96,21 +96,38 @@ void handleSerialReceive() {
 }
 
 void handleRedisReceive() {
-  int fromClientId, newLinesStartIndex, newLinesStopIndex;
-  if (redisReceiveMessage(&fromClientId, &newLinesStartIndex, &newLinesStopIndex)) {
+  RedisMessage redisMessage;
+  if (redisReceiveMessage(&redisMessage)) {
     Serial.write("Redis message received: From client ");
-    Serial.print(fromClientId);
-    Serial.write(" - Interval: ");
-    Serial.print(newLinesStartIndex);
-    Serial.write(" to ");
-    Serial.println(newLinesStopIndex);
+    Serial.print(redisMessage.fromClientId);
+    Serial.print(" - Opcode: ");
+    Serial.print(redisMessage.opcode);
+    if (redisMessage.opcode == REDIS_LINE_OPCODE) {
+      Serial.write(" - Interval: ");
+      Serial.print(redisMessage.data.lineInterval.newLinesStartIndex);
+      Serial.write(" to ");
+      Serial.print(redisMessage.data.lineInterval.newLinesStopIndex);
+    }
+    Serial.println("");
 
     // Download lines only if they come from the other client,
     // otherwise it means that the lines were drawn by our own user
     // so they are already displayed on our screen.
-    if (fromClientId != myClientId) {
-      int count = redisDownloadLinesBegin(newLinesStartIndex, newLinesStopIndex);
-      getLinesFromRedisAndDrawThem(count);
+    if (redisMessage.fromClientId != myClientId) {
+      switch (redisMessage.opcode) {
+        case REDIS_LINE_OPCODE:
+          getLinesFromRedisAndDrawThem(
+            redisDownloadLinesBegin(
+              redisMessage.data.lineInterval.newLinesStartIndex,
+              redisMessage.data.lineInterval.newLinesStopIndex));
+          break;
+        case REDIS_CLEAR_OPCODE:
+          sendStatusMessage("Your friend cleared the drawing.");
+          serialTransmitClear();
+          break;
+        default:
+          fatalError("Redis message contains invalid opcode: 0x%x", redisMessage.opcode);
+      }
     }
   }
 }
