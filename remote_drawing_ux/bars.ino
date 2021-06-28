@@ -102,7 +102,7 @@ void renderToolbar() {
 }
 
 
-void handleToolbarClick(int x, int y) {
+bool handleToolbarClick(int x, int y) {
   for (byte i = 0; i < NUMBER_OF_BUTTONS; i++) {
     if (x > buttonsCoords[i].x
         && y > buttonsCoords[i].y
@@ -118,6 +118,8 @@ void handleToolbarClick(int x, int y) {
         clearDisplayedDrawing();
         renderButtonBorder(NUMBER_OF_COLORS, false);
       }
+      return true;
     }
   }
+  return false;
 }

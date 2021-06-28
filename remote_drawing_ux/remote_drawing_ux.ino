@@ -178,10 +178,10 @@ void handleTouch() {
   static bool buttonPressed = false;
 
   // We use 0 as meaning "not released"
-  unsigned long penReleaseTime = 1;
+  static unsigned long penReleaseTime = 1;
 
   uint16_t rawX, rawY;
-  int lineX, lineY, newX, newY;
+  int highPrecisionX = -1, highPrecisionY = -1, lowPrecisionX = -1, lowPrecisionY = -1;
 
   // Wifi Arduino is not ready to receive data, so don't allow user to draw
   if (digitalRead(READY_TO_DRAW_PIN) == LOW) return;
@@ -191,67 +191,64 @@ void handleTouch() {
     tft.touchRead(&rawX, &rawY);
 
     // Translate touch screen coordinates to display coordinates
-    if (translateTouchCoords(rawX, rawY, &newX, &newY) == 0
-        && newX >= 0
-        && newY >= 0
-        && newX < DISPLAY_WIDTH
-        && newY < DISPLAY_HEIGHT) {
+    if (translateTouchCoords(rawX, rawY, &lowPrecisionX, &lowPrecisionY) == 0
+        && lowPrecisionX >= 0
+        && lowPrecisionY >= 0
+        && lowPrecisionX < DISPLAY_WIDTH
+        && lowPrecisionY < DISPLAY_HEIGHT) {
 
       if (beforeLastTouchX >= 0 && lastTouchX >= 0) {
         // Compute high-precision coordinates of clicked point by averaging successive coordinates
-        extractPoint(beforeLastTouchX, beforeLastTouchY, lastTouchX, lastTouchY, newX, newY, &lineX, &lineY);
+        extractPoint(beforeLastTouchX, beforeLastTouchY, lastTouchX, lastTouchY, lowPrecisionX, lowPrecisionY, &highPrecisionX, &highPrecisionY);
 
         unsigned long now = millis();
-        if (newX >= DRAWABLE_WIDTH || newY >= DRAWABLE_HEIGHT) {
+        if (highPrecisionX >= DRAWABLE_WIDTH || highPrecisionY >= DRAWABLE_HEIGHT) {
           // We are oustide the drawable area, so try to detect a click on a button
-          // Avoid repeating click on button
-          if (! buttonPressed) {
-            handleToolbarClick(newX, newY);
+          if (lastLineX == -1 && !buttonPressed && handleToolbarClick(highPrecisionX, highPrecisionY)) {
+            // This flag is to avoid repeating click on button until user releases pen.
+            buttonPressed = true;
           }
-          buttonPressed = true;
-          lastLineX = -1;
-          lastLineY = -1;
-        } else if (lastLineX >= 0) {
+        } else if (lastLineX >= 0 && ! buttonPressed) {
           // We are continuing a line.
           // Limit the number of line points generated per second, to optimize bandwidth
           if (now >= lastLinePointTime + POINT_SAMPLING_PERIOD) {
             Line line;
             line.x0 = lastLineX;
             line.y0 = lastLineY;
-            line.x1 = lineX;
-            line.y1 = lineY;
+            line.x1 = highPrecisionX;
+            line.y1 = highPrecisionY;
             line.color = selectedColor;
 
             drawBigLine(line);
             serialTransmitLine(line);
 
-            lastLineX = lineX;
-            lastLineY = lineY;
+            lastLineX = highPrecisionX;
+            lastLineY = highPrecisionY;
             lastLinePointTime = now;
           }
-        } else {
+        } else if (! buttonPressed) {
           // This is the first point of the line, so let's draw a single point
           // because the user might want to draw a single point and release the pen.
           Line line;
-          line.x0 = lineX;
-          line.y0 = lineY;
-          line.x1 = lineX;
-          line.y1 = lineY;
+          line.x0 = highPrecisionX;
+          line.y0 = highPrecisionY;
+          line.x1 = highPrecisionX;
+          line.y1 = highPrecisionY;
           line.color = selectedColor;
 
           drawBigLine(line);
           serialTransmitLine(line);
 
-          lastLineX = lineX;
-          lastLineY = lineY;
+          lastLineX = highPrecisionX;
+          lastLineY = highPrecisionY;
           lastLinePointTime = now;
         }
       }
 
       beforeLastTouchX = lastTouchX;
       beforeLastTouchY = lastTouchY;
-      lastTouchX = newX;
-      lastTouchY = newY;
+      lastTouchX = lowPrecisionX;
+      lastTouchY = lowPrecisionY;
     }
   } else {
     if (penReleaseTime == 0) {

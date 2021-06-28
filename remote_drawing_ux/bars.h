@@ -11,8 +11,8 @@
 #define TOOLBAR_WIDTH (BUTTON_SIZE * 2)
 #define BUTTON_MARGIN 4
 
-#define DRAWABLE_WIDTH (DISPLAY_WIDTH - TOOLBAR_WIDTH - BUTTON_MARGIN - LINE_WIDTH - 10)
-#define DRAWABLE_HEIGHT (DISPLAY_HEIGHT - STATUS_BAR_SIZE - LINE_WIDTH - 10)
+#define DRAWABLE_WIDTH (DISPLAY_WIDTH - TOOLBAR_WIDTH - LINE_WIDTH)
+#define DRAWABLE_HEIGHT (DISPLAY_HEIGHT - STATUS_BAR_SIZE - LINE_WIDTH)
 
 extern byte selectedColor;
 
@@ -26,6 +26,6 @@ void initToolbar();
 
 void renderToolbar();
 
-void handleToolbarClick(int x, int y);
+bool handleToolbarClick(int x, int y);
 
 #endif
