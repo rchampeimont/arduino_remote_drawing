@@ -4,6 +4,7 @@
 #include "system.h"
 #include "calibrate.h"
 #include "serial_com.h"
+#include "backlight.h"
 
 // Period for telling the other Arduino that we are alive
 #define TELL_ALIVE_EVERY 1000

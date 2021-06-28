@@ -1,6 +1,8 @@
 // This file contains code to adjust TFT screen nacklight brightness
 // automatically based on luminosity measure with a phototransistor.
 
+#include "backlight.h"
+
 // This is deliberately not a "round number" to avoid
 // "synchronizing" with cycles of artifical lighting powered by AC.
 #define CHECK_PHOTOSENSOR_EVERY 263
@@ -28,7 +30,6 @@ void initBacklight() {
   updateBacklight();
 }
 
-// Adjusts the backlight of the TFT screen according to a photosensor
 void updateBacklight() {
   static byte brightnessValueIndex = 0;
   static byte actualBrightness = 0;
