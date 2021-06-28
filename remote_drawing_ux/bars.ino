@@ -48,10 +48,10 @@ void initToolbar() {
   }
 }
 
-void renderButtonBorder(int buttonIndex) {
+void renderButtonBorder(int buttonIndex, bool selected) {
   uint16_t color;
 
-  if (selectedColor == buttonIndex) {
+  if (selected) {
     if (selectedColor == RA8875_BLACK) {
       color = RA8875_BLACK;
     } else {
@@ -89,7 +89,7 @@ void renderToolbar() {
       buttonsCoords[i].w - 2 * BUTTON_MARGIN,
       buttonsCoords[i].h - 2 * BUTTON_MARGIN,
       color);
-    renderButtonBorder(i);
+    renderButtonBorder(i, selectedColor == i);
     if (i == NUMBER_OF_COLORS) {
       tft.textMode();
       tft.textSetCursor(
@@ -110,10 +110,14 @@ void handleToolbarClick(int x, int y) {
         && x < buttonsCoords[i].x + BUTTON_SIZE
         && y < buttonsCoords[i].y + BUTTON_SIZE) {
       if (i < NUMBER_OF_COLORS) {
+        renderButtonBorder(selectedColor, false);
         selectedColor = i;
-        renderToolbar();
+        renderButtonBorder(selectedColor, true);
       } else {
-        // TODO implement CLEAR
+        renderButtonBorder(NUMBER_OF_COLORS, true);
+        serialTransmitClear();
+        clearDisplayedDrawing();
+        renderButtonBorder(NUMBER_OF_COLORS, false);
       }
     }
   }

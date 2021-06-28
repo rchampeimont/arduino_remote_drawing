@@ -174,6 +174,7 @@ void handleTouch() {
   static int lastLineX = -1;
   static int lastLineY = -1;
   static unsigned long lastLinePointTime = 0;
+  static bool buttonPressed = false;
 
   // We use 0 as meaning "not released"
   unsigned long penReleaseTime = 1;
@@ -223,7 +224,11 @@ void handleTouch() {
           }
         } else if (newX >= DRAWABLE_WIDTH) {
           // Click happened on the toolbar
-          handleToolbarClick(newX, newY);
+          // Avoid repeating click on button
+          if (! buttonPressed) {
+            handleToolbarClick(newX, newY);
+          }
+          buttonPressed = true;
         } else {
           // This is the first point of the line, so let's draw a single point
           // because the user might want to draw a single point and release the pen.
@@ -254,6 +259,7 @@ void handleTouch() {
       penReleaseTime = millis();
     } else if (millis() - penReleaseTime > RELEASE_DELAY) {
       // Pen has been released for long enough, so consider the pen really released.
+      buttonPressed = false;
       beforeLastTouchX = -1;
       beforeLastTouchY = -1;
       lastTouchX = -1;

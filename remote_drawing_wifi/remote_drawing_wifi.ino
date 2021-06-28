@@ -81,6 +81,9 @@ void handleSerialReceive() {
       case SERIAL_COM_LINE_OPCODE:
         redisAddLineToSendBuffer(packet.data.line);
         break;
+      case SERIAL_COM_CLEAR_OPCODE:
+        redisPlanClearDrawing();
+        break;
       case SERIAL_COM_ALIVE_OPCODE:
         aliveReceived();
         break;

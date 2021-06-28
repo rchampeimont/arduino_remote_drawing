@@ -12,6 +12,7 @@
 #define REDIS_TIMEOUT 5000 // ms
 #define PING_EVERY 30000 // ms
 #define REDIS_CHANNEL "remote_drawing"
+#define REDIS_LINES_KEY "remote_drawing_lines"
 
 // Send buffer stuff
 volatile byte currentBufferForWrite = 0;
@@ -19,6 +20,7 @@ volatile Line lineSendBuffer0[MAX_LINES_IN_SEND_BUFFER];
 volatile byte linesInBuffer0 = 0;
 volatile Line lineSendBuffer1[MAX_LINES_IN_SEND_BUFFER];
 volatile byte linesInBuffer1 = 0;
+volatile bool askedClear = false;
 
 // Ping-related stuff
 unsigned long subPingSentAt = 0; // Time when we sent the last PING in the subscription connection
@@ -207,6 +209,17 @@ int redisRPUSH(const char *key, byte buf[], int bufsize) {
   return expectRedisInteger(&mainClient, "RPUSH");
 }
 
+// Execute the Redis DEL command
+int redisDEL(const char *key) {
+  mainClient.write("*2\r\n");
+  mainClient.write("$3\r\n");
+  mainClient.write("DEL\r\n");
+  mainClient.write("$"); mainClient.print(strlen(key)); mainClient.write("\r\n");
+  mainClient.write(key); mainClient.write("\r\n");
+
+  return expectRedisInteger(&mainClient, "DEL");
+}
+
 
 int redisBatchRPUSH(const char *key, byte buf[], int elementSize, int numberOfElements) {
   mainClient.write("*"); mainClient.print(2 + numberOfElements); mainClient.write("\r\n");
@@ -318,7 +331,7 @@ void sendLinesInBuffer() {
   Serial.println(" lines)...");
   unsigned long start = millis();
   int newSize = redisBatchRPUSH(
-                  "remote_drawing_lines",
+                  REDIS_LINES_KEY,
                   (byte *) bufferToRead,
                   sizeof(Line),
                   *linesInBufferAddress);
@@ -345,14 +358,35 @@ void sendLinesInBuffer() {
   *linesInBufferAddress = 0;
 }
 
+void redisPlanClearDrawing() {
+  // We are going to clear the drawing anyway, so get rid of any lines waiting to be sent
+  linesInBuffer0 = 0;
+  linesInBuffer1 = 0;
+
+  // Mark
+  askedClear = true;
+}
+
+void redisClearDrawing() {
+  Serial.println("Clearing drawing on server...");
+  
+  redisDEL(REDIS_LINES_KEY);
+
+  // Reset askedClear flag
+  askedClear = false;
+}
+
 void runRedisPeriodicTasks() {
   static unsigned long lastSentBufferTime = millis();
   static unsigned long lastPingTime = millis();
-  
+
   unsigned long now = millis();
 
   // Send lines in buffer
   if (now >= lastSentBufferTime + SEND_BUFFER_EVERY) {
+    if (askedClear) {
+      redisClearDrawing();
+    }
     sendLinesInBuffer();
 
     lastSentBufferTime = now;
@@ -388,7 +422,7 @@ void redisPingSubClient() {
 }
 
 int redisDownloadLinesBegin(int start, int stop) {
-  return redisLRANGE("remote_drawing_lines", start, stop);
+  return redisLRANGE(REDIS_LINES_KEY, start, stop);
 }
 
 void redisDownloadLine(Line *line) {

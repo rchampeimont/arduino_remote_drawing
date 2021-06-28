@@ -52,6 +52,9 @@ void serialTransmitLine(Line line);
 // Receive a packet from the Wifi Arduino
 int serialReceivePacket(ReceivedPacket *packetAddr, char returnedMessage[MAX_STATUS_MESSAGE_LENGTH + 1]);
 
+// Clear drawing
+void serialTransmitClear();
+
 // Tell the other Arduino that we are alive
 void serialTransmitAlive();
 

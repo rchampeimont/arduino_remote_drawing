@@ -68,6 +68,13 @@ void serialTransmitLine(Line line) {
   serialTransmitPacket(packet);
 }
 
+void serialTransmitClear() {
+  SentPacket packet;
+  initPacket(&packet);
+  packet.opcode = SERIAL_COM_CLEAR_OPCODE;
+  serialTransmitPacket(packet);
+}
+
 void serialTransmitAlive() {
   SentPacket packet;
   initPacket(&packet);
