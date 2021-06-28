@@ -9,16 +9,16 @@
 #define TELL_ALIVE_EVERY 1000
 
 // TFT Display resolution
-const int DISPLAY_WIDTH = 800;
-const int DISPLAY_HEIGHT = 480;
+#define DISPLAY_WIDTH 800
+#define DISPLAY_HEIGHT 480
 
-const int STATUS_BAR_SIZE = 16;
-const uint16_t STATUS_BAR_BGCOLOR = 0b0000000000001111;
+#define STATUS_BAR_SIZE 16
+#define STATUS_BAR_BGCOLOR 0b0000000000001111
 
-const int LINE_WIDTH = 3;
+#define LINE_WIDTH 3
 
 // How many filled circles to draw to draw a big line
-const int LINE_STEPS = 10;
+#define LINE_STEPS 10
 
 // Record a line point every
 #define POINT_SAMPLING_PERIOD 20 // ms
@@ -36,23 +36,9 @@ const uint16_t COLORS[NUMBER_OF_COLORS] {
 };
 
 // Consider the pen is realsed after this delay
-const unsigned long RELEASE_DELAY = 50; // ms
+#define RELEASE_DELAY 50 // ms
 
 Adafruit_RA8875 tft = Adafruit_RA8875(RA8875_CS_PIN, RA8875_RESET_PIN);
-
-int lastTouchX = -1;
-int lastTouchY = -1;
-int beforeLastTouchX = -1;
-int beforeLastTouchY = -1;
-int lastLineX = -1;
-int lastLineY = -1;
-unsigned long lastLinePointTime = 0;
-
-// We use 0 as meaning "not released"
-unsigned long penReleaseTime = 1;
-
-// Last Alive packet sent
-unsigned long lastAliveSentTime = millis();
 
 byte selectedColor = 0;
 
@@ -173,12 +159,23 @@ void extractPoint(int x1, int y1, int x2, int y2, int x3, int y3, int *x, int *y
 }
 
 void handleTouch() {
+  static int lastTouchX = -1;
+  static int lastTouchY = -1;
+  static int beforeLastTouchX = -1;
+  static int beforeLastTouchY = -1;
+  static int lastLineX = -1;
+  static int lastLineY = -1;
+  static unsigned long lastLinePointTime = 0;
+
+  // We use 0 as meaning "not released"
+  unsigned long penReleaseTime = 1;
+
   uint16_t rawX, rawY;
   int lineX, lineY, newX, newY;
 
   // Wifi Arduino is not ready to receive data, so don't allow user to draw
   if (digitalRead(READY_TO_DRAW_PIN) == LOW) return;
-  
+
   if (tft.touched()) {
     penReleaseTime = 0;
     tft.touchRead(&rawX, &rawY);
@@ -282,6 +279,8 @@ void printStatusFormat(const char *format, ...) {
 
 
 void loop() {
+  static unsigned long lastAliveSentTime = millis();
+
   digitalWrite(DEBUG_LOOP_RUN_TIME_PIN, HIGH);
   handleTouch();
 
