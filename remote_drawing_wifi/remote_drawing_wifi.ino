@@ -16,9 +16,6 @@
 // Period for telling the other Arduino that we are alive
 #define TELL_ALIVE_EVERY 1000
 
-// Last Alive packet sent
-unsigned long lastAliveSentTime = millis();
-
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
@@ -138,6 +135,9 @@ void downloadInitialData() {
 }
 
 void loop() {
+  // Last Alive packet sent
+  static unsigned long lastAliveSentTime = millis();
+
   handleRedisReceive();
   runRedisPeriodicTasks();
 

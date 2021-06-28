@@ -5,9 +5,6 @@
 #include "serial_com.h"
 #include "system.h"
 
-char targetWifiSSID[] = WIFI_NAME;
-char targetWifiPassword[] = WIFI_PASSWORD;
-
 void initWifi() {
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -21,9 +18,9 @@ void initWifi() {
 
   WiFi.lowPowerMode();
 
-  sendStatusMessageFormat("Trying to connect to \"%s\" wifi network...", targetWifiSSID);
-  if (WiFi.begin(targetWifiSSID, targetWifiPassword) != WL_CONNECTED) {
-    fatalError("Connection to Wifi network \"%s\" failed", targetWifiSSID);
+  sendStatusMessageFormat("Trying to connect to \"%s\" wifi network...", WIFI_NAME);
+  if (WiFi.begin(WIFI_NAME, WIFI_PASSWORD) != WL_CONNECTED) {
+    fatalError("Connection to Wifi network \"%s\" failed", WIFI_NAME);
   }
 
   sendStatusMessage("Connection to wifi OK.");
