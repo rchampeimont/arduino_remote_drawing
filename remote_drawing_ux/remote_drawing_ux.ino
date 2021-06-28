@@ -5,6 +5,7 @@
 #include "calibrate.h"
 #include "serial_com.h"
 #include "backlight.h"
+#include "bars.h"
 
 // Period for telling the other Arduino that we are alive
 #define TELL_ALIVE_EVERY 1000
@@ -12,9 +13,6 @@
 // TFT Display resolution
 #define DISPLAY_WIDTH 800
 #define DISPLAY_HEIGHT 480
-
-#define STATUS_BAR_SIZE 16
-#define STATUS_BAR_BGCOLOR 0b0000000000001111
 
 #define LINE_WIDTH 3
 
@@ -255,27 +253,6 @@ void handleTouch() {
       lastLineY = -1;
     }
   }
-}
-
-// Print a message in the status bar
-void printStatus(const char* msg) {
-  tft.graphicsMode();
-  tft.fillRect(0, DISPLAY_HEIGHT - STATUS_BAR_SIZE, DISPLAY_WIDTH, STATUS_BAR_SIZE, STATUS_BAR_BGCOLOR);
-  tft.textMode();
-  tft.textSetCursor(0, DISPLAY_HEIGHT - STATUS_BAR_SIZE);
-  tft.textColor(RA8875_WHITE, STATUS_BAR_BGCOLOR);
-  tft.textWrite(msg, strlen(msg));
-  tft.graphicsMode();
-}
-
-// Like printStatus() but takes printf()-like arguments
-void printStatusFormat(const char *format, ...) {
-  char buf[MAX_STATUS_MESSAGE_LENGTH + 1];
-  va_list args;
-  va_start(args, format);
-  vsnprintf(buf, MAX_STATUS_MESSAGE_LENGTH + 1, format, args);
-  printStatus(buf);
-  va_end(args);
 }
 
 
