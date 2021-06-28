@@ -23,23 +23,29 @@
 #define POINT_SAMPLING_PERIOD 20 // ms
 
 // Colors
-#define NUMBER_OF_COLORS 7
+#define NUMBER_OF_COLORS 15
 const uint16_t COLORS[NUMBER_OF_COLORS] {
   RA8875_BLACK,
-  RA8875_RED,
-  RA8875_GREEN,
-  RA8875_BLUE,
-  RA8875_CYAN,
+  0xBDD7, // light grey
+  0x630C, // dark grey
+  0x981F, // violet
   RA8875_MAGENTA,
-  RA8875_YELLOW
+  0xFC3E, // pink
+  RA8875_RED,
+  0xFB60, // orange
+  RA8875_YELLOW,
+  RA8875_GREEN,
+  0x0443, // dark green
+  RA8875_CYAN,
+  RA8875_BLUE,
+  0b0000000000001111, // dark blue
+  RA8875_WHITE
 };
 
 // Consider the pen is realsed after this delay
 #define RELEASE_DELAY 50 // ms
 
 Adafruit_RA8875 tft = Adafruit_RA8875(RA8875_CS_PIN, RA8875_RESET_PIN);
-
-byte selectedColor = 0;
 
 void setup() {
   pinMode(PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT, OUTPUT);
@@ -64,6 +70,9 @@ void setup() {
 
   printStatus("Copyright (c) 2021 Raphael Champeimont");
 
+  initToolbar();
+  renderToolbar();
+
   // Reset the "Wifi" Arduino so that it resends us the drawing
   resetOther();
 }
@@ -82,7 +91,7 @@ void drawBigLine(Line line) {
 
 
 void clearDisplayedDrawing() {
-  tft.fillRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT - STATUS_BAR_SIZE, RA8875_WHITE);
+  tft.fillRect(0, 0, DRAWABLE_WIDTH, DRAWABLE_HEIGHT, RA8875_WHITE);
 }
 
 
@@ -183,8 +192,8 @@ void handleTouch() {
     if (translateTouchCoords(rawX, rawY, &newX, &newY) == 0
         && newX >= 0
         && newY >= 0
-        && newX < DISPLAY_WIDTH
-        && newY < DISPLAY_HEIGHT - STATUS_BAR_SIZE) {
+        && newX < DRAWABLE_WIDTH
+        && newY < DRAWABLE_HEIGHT) {
 
       if (beforeLastTouchX >= 0 && lastTouchX >= 0) {
         extractPoint(beforeLastTouchX, beforeLastTouchY, lastTouchX, lastTouchY, newX, newY, &lineX, &lineY);
@@ -199,7 +208,7 @@ void handleTouch() {
             line.y0 = lastLineY;
             line.x1 = lineX;
             line.y1 = lineY;
-            line.color = selectedColor;
+            line.color = getSelectedColor();
 
             drawBigLine(line);
             serialTransmitLine(line);
@@ -216,7 +225,7 @@ void handleTouch() {
           line.y0 = lineY;
           line.x1 = lineX;
           line.y1 = lineY;
-          line.color = selectedColor;
+          line.color = getSelectedColor();
 
           drawBigLine(line);
           serialTransmitLine(line);
@@ -238,13 +247,6 @@ void handleTouch() {
       penReleaseTime = millis();
     } else if (millis() - penReleaseTime > RELEASE_DELAY) {
       // Pen has been released for long enough, so consider the pen really released.
-
-      // Temporary code: cycle color on each pen release.
-      // This will be replaced by a color palette in the final version.
-      if (lastLineX != -1) {
-        selectedColor = (selectedColor + 1) % NUMBER_OF_COLORS;
-      }
-
       beforeLastTouchX = -1;
       beforeLastTouchY = -1;
       lastTouchX = -1;
