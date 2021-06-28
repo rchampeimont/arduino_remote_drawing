@@ -218,7 +218,7 @@ void handleTouch() {
             lastLinePointTime = now;
           }
         } else {
-          // This is the first point of athe line, so let's draw a single point
+          // This is the first point of the line, so let's draw a single point
           // because the user might want to draw a single point and release the pen.
           Line line;
           line.x0 = lineX;
