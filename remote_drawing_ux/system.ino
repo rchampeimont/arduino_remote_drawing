@@ -3,8 +3,6 @@
 // Reset the other Arduino if it does not report being alive for this number of seconds
 #define DECLARE_WIFI_ARDUINO_DEAD_AFTER 60
 
-// Number of seconds for which the Wifi Arduino has not sent us "alive" signals
-volatile byte noResponseFromWifiArduinoSeconds = 0;
 unsigned long lastAliveReceived = millis();
 
 void aliveReceived() {
