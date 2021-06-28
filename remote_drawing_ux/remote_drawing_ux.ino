@@ -91,8 +91,7 @@ void drawBigLine(Line line) {
 
 
 void clearDisplayedDrawing() {
-  tft.fillRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT - STATUS_BAR_SIZE, RA8875_WHITE);
-  renderToolbar();
+  tft.fillRect(0, 0, DISPLAY_WIDTH - TOOLBAR_WIDTH, DISPLAY_HEIGHT - STATUS_BAR_SIZE, RA8875_WHITE);
 }
 
 
