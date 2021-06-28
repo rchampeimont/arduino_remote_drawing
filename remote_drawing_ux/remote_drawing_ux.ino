@@ -192,7 +192,7 @@ void handleTouch() {
     if (translateTouchCoords(rawX, rawY, &newX, &newY) == 0
         && newX >= 0
         && newY >= 0
-        && newX < DRAWABLE_WIDTH
+        && newX < DISPLAY_WIDTH
         && newY < DRAWABLE_HEIGHT) {
 
       if (beforeLastTouchX >= 0 && lastTouchX >= 0) {
@@ -201,14 +201,18 @@ void handleTouch() {
         unsigned long now = millis();
         if (lastLineX >= 0) {
           // We are continuing a line.
-          // Limit the number of line points generated per second, to optimize bandwidth
-          if (now >= lastLinePointTime + POINT_SAMPLING_PERIOD) {
+          if (
+            // Limit the number of line points generated per second, to optimize bandwidth
+            now >= lastLinePointTime + POINT_SAMPLING_PERIOD
+            // Check we are not on toolbar
+            && newX < DRAWABLE_WIDTH
+          ) {
             Line line;
             line.x0 = lastLineX;
             line.y0 = lastLineY;
             line.x1 = lineX;
             line.y1 = lineY;
-            line.color = getSelectedColor();
+            line.color = selectedColor;
 
             drawBigLine(line);
             serialTransmitLine(line);
@@ -217,6 +221,9 @@ void handleTouch() {
             lastLineY = lineY;
             lastLinePointTime = now;
           }
+        } else if (newX >= DRAWABLE_WIDTH) {
+          // Click happened on the toolbar
+          handleToolbarClick(newX, newY);
         } else {
           // This is the first point of the line, so let's draw a single point
           // because the user might want to draw a single point and release the pen.
@@ -225,7 +232,7 @@ void handleTouch() {
           line.y0 = lineY;
           line.x1 = lineX;
           line.y1 = lineY;
-          line.color = getSelectedColor();
+          line.color = selectedColor;
 
           drawBigLine(line);
           serialTransmitLine(line);

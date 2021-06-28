@@ -3,6 +3,10 @@
 #include "bars.h"
 
 #define STATUS_BAR_BGCOLOR 0b0000000000001111
+#define TOOLBAR_BGCOLOR 0xA514
+
+#define STRING_ON_CLEAR_BUTTON "DEL"
+#define BUTTON_MARGIN 4
 
 typedef struct {
   int16_t x;
@@ -12,6 +16,8 @@ typedef struct {
 } ButtonCoords;
 
 ButtonCoords buttonsCoords[NUMBER_OF_BUTTONS];
+
+byte selectedColor = 0;
 
 void printStatus(const char* msg) {
   tft.graphicsMode();
@@ -42,6 +48,33 @@ void initToolbar() {
   }
 }
 
+void renderButtonBorder(int buttonIndex) {
+  uint16_t color;
+
+  if (selectedColor == buttonIndex) {
+    if (selectedColor == RA8875_BLACK) {
+      color = RA8875_BLACK;
+    } else {
+      color = RA8875_BLACK;
+    }
+  } else {
+    color = TOOLBAR_BGCOLOR;
+  }
+
+  tft.drawRect(
+    buttonsCoords[buttonIndex].x,
+    buttonsCoords[buttonIndex].y,
+    buttonsCoords[buttonIndex].w,
+    buttonsCoords[buttonIndex].h,
+    color);
+  tft.drawRect(
+    buttonsCoords[buttonIndex].x + 1,
+    buttonsCoords[buttonIndex].y + 1,
+    buttonsCoords[buttonIndex].w - 2,
+    buttonsCoords[buttonIndex].h - 2,
+    color);
+}
+
 void renderToolbar() {
   for (byte i = 0; i < NUMBER_OF_BUTTONS; i++) {
     uint16_t color;
@@ -50,7 +83,13 @@ void renderToolbar() {
     } else {
       color = RA8875_BLACK;
     }
-    tft.fillRect(buttonsCoords[i].x, buttonsCoords[i].y, buttonsCoords[i].w, buttonsCoords[i].h, color);
+    tft.fillRect(
+      buttonsCoords[i].x + BUTTON_MARGIN,
+      buttonsCoords[i].y + BUTTON_MARGIN,
+      buttonsCoords[i].w - 2 * BUTTON_MARGIN,
+      buttonsCoords[i].h - 2 * BUTTON_MARGIN,
+      color);
+    renderButtonBorder(i);
     if (i == NUMBER_OF_COLORS) {
       tft.textMode();
       tft.textSetCursor(
@@ -63,6 +102,19 @@ void renderToolbar() {
   }
 }
 
-byte getSelectedColor() {
-  return 0;
+
+void handleToolbarClick(int x, int y) {
+  for (byte i = 0; i < NUMBER_OF_BUTTONS; i++) {
+    if (x > buttonsCoords[i].x
+        && y > buttonsCoords[i].y
+        && x < buttonsCoords[i].x + BUTTON_SIZE
+        && y < buttonsCoords[i].y + BUTTON_SIZE) {
+      if (i < NUMBER_OF_COLORS) {
+        selectedColor = i;
+        renderToolbar();
+      } else {
+        // TODO implement CLEAR
+      }
+    }
+  }
 }

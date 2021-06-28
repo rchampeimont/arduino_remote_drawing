@@ -13,8 +13,7 @@
 #define DRAWABLE_WIDTH (DISPLAY_WIDTH - TOOLBAR_WIDTH)
 #define DRAWABLE_HEIGHT (DISPLAY_HEIGHT - STATUS_BAR_SIZE)
 
-#define STRING_ON_CLEAR_BUTTON "DEL"
-
+extern byte selectedColor;
 
 // Print a message in the status bar
 void printStatus(const char* msg);
@@ -26,6 +25,6 @@ void initToolbar();
 
 void renderToolbar();
 
-byte getSelectedColor();
+void handleToolbarClick(int x, int y);
 
 #endif
