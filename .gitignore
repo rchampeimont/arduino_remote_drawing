@@ -33,3 +33,6 @@
 
 # File with secrets
 secrets.h
+
+# MacOS stuff
+.DS_Store
