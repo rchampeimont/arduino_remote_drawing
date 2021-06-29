@@ -21,8 +21,7 @@ To compile the code for the "Wifi" Arduino (remote_drawing_wifi directory), you 
 ## "UX" Arduino (for Arduino Uno Rev3)
 The code for the UX Arduino (remote_drawing_ux directory) does not need any secrets and can be compiled and uploaded to an Arduino Uno directly.
 
-The first time you run the program, it is going to ask you to calibrate the touch screen (see picture below). It then stores the calibration data in EEPROM to skip calibration on future restarts. If you want to force recalibration, you can tie pin 5 to ground and restart the Arduino.
-![Calibration](/images/calibration.jpg?raw=true)
+The first time you run the program, it is going to ask you to calibrate the touch screen. It then stores the calibration data in EEPROM to skip calibration on future restarts. If you want to force recalibration, you can tie pin 5 to ground and restart the Arduino.
 
 ## More details on the "reset circuit"
 As you can see in the schematic above, this circuit is present twice:
