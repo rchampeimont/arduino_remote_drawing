@@ -9,6 +9,8 @@ Each station is made of the following hardware (so you need all this twice):
 * Arduino Uno Rev3
 * Adafruit RA8875 https://www.adafruit.com/product/1590
 * Adafruit 7.0" 40-pin TFT Display - 800x480 with Touchscreen https://www.adafruit.com/product/2354
+* A phototransistor: I used the one in the Arduino starter kit (https://www.arduino.cc/documents/datasheets/HW5P-1.pdf) but you can probably use another one. This is used to adapt the brightness of the screen according to ambiant light, but this is not stricly necessary (replace the phototransistor with a wire if you don't want this feature).
+* Some standard components: resistors, diodes, capacitors and NPN transistors. See schematic below for details.
 
 As you can see in the diagram above, you also need a Redis server that can be accessed by the two stations. Here we use Redis to store the drawing and to create a pub/sub channel so that each station gets changes in real-time (a few seconds). So you need to have a Linux server running around the clock for the project to work. But if you already have one, adding a Redis server is very simple (you just need to set port number and password) and will require very little resources (Redis uses only a few megabytes of RAM). Learn more about Redis here: https://redis.io/
 
