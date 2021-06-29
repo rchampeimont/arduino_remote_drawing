@@ -15,10 +15,14 @@ As you can see in the diagram above, you also need a Redis server that can be ac
 Here is the complete schematic for one station:
 ![Complete schematic](/schematics/complete_schematic.png?raw=true)
 
-## Secrets file
+## "Wifi" Arduino (for Arduino Uno Wifi Rev2)
 To compile the code for the "Wifi" Arduino (remote_drawing_wifi directory), you need to rename the secrets.txt file and you put your own secrets in it (Wifi password and Redis host and password).
 
+## "UX" Arduino (for Arduino Uno Rev3)
 The code for the UX Arduino (remote_drawing_ux directory) does not need any secrets and can be compiled and uploaded to an Arduino Uno directly.
+
+The first time you run the program, it is going to ask you to calibrate the touch screen (see picture below). It then stores the calibration data in EEPROM to skip calibration on future restarts. If you want to force recalibration, you can tie pin 5 to ground and restart the Arduino.
+![Calibration](/images/calibration.jpg?raw=true)
 
 ## More details on the "reset circuit"
 As you can see in the schematic above, this circuit is present twice:
