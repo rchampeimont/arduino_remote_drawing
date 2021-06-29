@@ -10,13 +10,13 @@ Each station is made of the following hardware (so you need all this twice):
 * Adafruit RA8875 https://www.adafruit.com/product/1590
 * Adafruit 7.0" 40-pin TFT Display - 800x480 with Touchscreen https://www.adafruit.com/product/2354
 
-As you can see in the diagram above, you also need a Redis server that can be accessed by the two stations. So you need to have a Linux server running around the clock for the project to work. But if you already have one, adding a Redis server is very simple and will require very little resources (Redis uses only a few megabytes of RAM). Learn more about Redis here: https://redis.io/
+As you can see in the diagram above, you also need a Redis server that can be accessed by the two stations. Here we use Redis to store the drawing and to create a pub/sub channel so that each station gets changes in real-time (a few seconds). So you need to have a Linux server running around the clock for the project to work. But if you already have one, adding a Redis server is very simple (you just need to set port number and password) and will require very little resources (Redis uses only a few megabytes of RAM). Learn more about Redis here: https://redis.io/
 
 Here is the complete schematic for one station:
 ![Complete schematic](/schematics/complete_schematic.png?raw=true)
 
 ## Secrets file
-To compile the code for the "Wifi" Arduino (remote_drawing_wifi directory), you need to rename the secrets.txt file and you put your own secrets in it (basically Wifi and Redis passwords).
+To compile the code for the "Wifi" Arduino (remote_drawing_wifi directory), you need to rename the secrets.txt file and you put your own secrets in it (Wifi password and Redis host and password).
 
 The code for the UX Arduino (remote_drawing_ux directory) does not need any secrets and can be compiled and uploaded to an Arduino Uno directly.
 
