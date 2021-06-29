@@ -25,6 +25,16 @@ The code for the UX Arduino (remote_drawing_ux directory) does not need any secr
 
 The first time you run the program, it is going to ask you to calibrate the touch screen. It then stores the calibration data in EEPROM to skip calibration on future restarts. If you want to force recalibration, you can tie pin 5 to ground and restart the Arduino.
 
+## Powering
+To power the system, you can of course connect a USB cable to each Arduino.
+
+In my case, I connect a 9V adapter to the jack input on the Arduino Uno Wifi R2, then I connect the 5V of both Arduinos together, which means that all voltage conversion from 9V to 5V is done by the Arduino Uno Wifi R2 (with an MPM3610 chip), which does that more efficiently (it heats less) than the Arduino Uno (which does it with an NCP1117 chip).
+
+Here are some benchmarks showing that (intensity is measured on 9V adapter output):
+* 9V to VIN of Arduino Uno Wifi R2 and 5V tied together: 0.17 A
+* 9V to VIN of Arduino Uno R3 and 5V tied together: 0.25 A
+* 9V to both VINs tied together (5V are not tied): 0.24 A
+
 ## More details on the "reset circuit"
 As you can see in the schematic above, this circuit is present twice:
 ![Reset circuit](/schematics/reset_circuit.jpg?raw=true)
