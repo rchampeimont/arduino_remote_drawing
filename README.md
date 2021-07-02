@@ -7,7 +7,7 @@ Here is the general overview of the whole system:
 Each station is made of the following hardware (so you need all this twice):
 * Arduino Uno Wifi Rev2
 * Arduino Uno Rev3
-* Adafruit RA8875 https://www.adafruit.com/product/1590
+* Adafruit RA8875 Driver Board for 40-pin TFT Touch Displays - 800x480 Max https://www.adafruit.com/product/1590
 * Adafruit 7.0" 40-pin TFT Display - 800x480 with Touchscreen https://www.adafruit.com/product/2354
 * A phototransistor: I used the one in the Arduino starter kit (https://www.arduino.cc/documents/datasheets/HW5P-1.pdf) but you can probably use another one. This is used to adapt the brightness of the screen according to ambiant light, but this is not stricly necessary (replace the phototransistor with a wire if you don't want this feature).
 * Some standard components: resistors, diodes, capacitors and NPN transistors. See schematic below for details.
