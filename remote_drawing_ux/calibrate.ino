@@ -204,7 +204,7 @@ void tsCalibrate(void)
 
   /* --------------- Welcome Screen --------------- */
   data = renderCalibrationScreen(tft.width() / 2, tft.height() / 2, 5);
-  delay(250);
+  delay(500);
 
   /* ----------------- First Dot ------------------ */
   // 10% over and 10% down
@@ -213,7 +213,7 @@ void tsCalibrate(void)
   _tsLCDPoints[0].y = tft.height() / 10;
   _tsTSPoints[0].x = data.x;
   _tsTSPoints[0].y = data.y;
-  delay(250);
+  delay(500);
 
   /* ---------------- Second Dot ------------------ */
   // 50% over and 90% down
@@ -222,7 +222,7 @@ void tsCalibrate(void)
   _tsLCDPoints[1].y = tft.height() - tft.height() / 10;
   _tsTSPoints[1].x = data.x;
   _tsTSPoints[1].y = data.y;
-  delay(250);
+  delay(500);
 
   /* ---------------- Third Dot ------------------- */
   // 90% over and 50% down
@@ -231,7 +231,7 @@ void tsCalibrate(void)
   _tsLCDPoints[2].y = tft.height() / 2;
   _tsTSPoints[2].x = data.x;
   _tsTSPoints[2].y = data.y;
-  delay(250);
+  delay(500);
 
   /* Clear the screen */
   tft.fillScreen(RA8875_YELLOW);
