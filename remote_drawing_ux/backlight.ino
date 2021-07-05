@@ -11,13 +11,24 @@
 
 #define MINIMUM_BRIGHTNESS_CHANGE 5
 
+// Reduce brightness according to ambiant light level after this time of inactivity
+#define REDUCE_BRIGHTNESS_AFTER_MS 10000
+
 byte brightnessValues[NUMBER_OF_BRIGHTNESS_VALUES_TO_AVERAGE];
+
+unsigned long lastUserTouchTime = 0;
+byte actualBrightness = 0;
 
 // Return an optimal backlight brightness setting adjusted
 // with room luminosity measured with phototransistor.
 byte getOptimalBacklightFromSensor() {
-  int photosensorValue = analogRead(PHOTOTRANSISTOR_PIN);
-  return (byte) constrain(map(photosensorValue, 0, 900, 0, 255), 0, 255);
+  if (lastUserTouchTime == 0 || millis() >= lastUserTouchTime + REDUCE_BRIGHTNESS_AFTER_MS) {
+    int photosensorValue = analogRead(PHOTOTRANSISTOR_PIN);
+    return (byte) constrain(map(photosensorValue, 0, 900, 0, 255), 0, 255);
+  } else {
+    // The user is drawing something, so keep full brightness to avoid PWM-related interferences
+    return 255;
+  }
 }
 
 void initBacklight() {
@@ -30,9 +41,13 @@ void initBacklight() {
   updateBacklight();
 }
 
+void setBrightness(byte value) {
+  actualBrightness = value;
+  tft.PWM1out(value);
+}
+
 void updateBacklight() {
   static byte brightnessValueIndex = 0;
-  static byte actualBrightness = 0;
 
   // Add a new measure
   byte newValue = getOptimalBacklightFromSensor();
@@ -52,8 +67,7 @@ void updateBacklight() {
   // This is to avoid annoying flickering.
   if (newBrightnessAverage > actualBrightness + MINIMUM_BRIGHTNESS_CHANGE
       || newBrightnessAverage < actualBrightness - MINIMUM_BRIGHTNESS_CHANGE) {
-    actualBrightness = newBrightnessAverage;
-    tft.PWM1out(actualBrightness);
+    setBrightness(newBrightnessAverage);
   }
 }
 
@@ -65,5 +79,18 @@ void updateBacklightIfNecesary() {
   if (now >= lastPhotosensorCheckTime + CHECK_PHOTOSENSOR_EVERY) {
     updateBacklight();
     lastPhotosensorCheckTime = now;
+  }
+}
+
+void adjustBacklightForTouch() {
+  lastUserTouchTime = millis();
+
+  if (actualBrightness != 255) {
+    setBrightness(255);
+    // Set all values at 255 to force the average to be 255
+    for (byte i = 0; i < NUMBER_OF_BRIGHTNESS_VALUES_TO_AVERAGE; i++) {
+      brightnessValues[i] = 255;
+      delay(1);
+    }
   }
 }

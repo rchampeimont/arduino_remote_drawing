@@ -189,6 +189,9 @@ void handleTouch() {
     penReleaseTime = 0;
     tft.touchRead(&rawX, &rawY);
 
+    // Put brightness at 100% to avoid PWM-related interferences
+    adjustBacklightForTouch();
+
     // Translate touch screen coordinates to display coordinates
     if (translateTouchCoords(rawX, rawY, &lowPrecisionX, &lowPrecisionY) == 0
         && lowPrecisionX >= 0
