@@ -33,9 +33,15 @@ WiFiClient mainClient;
 WiFiClient subClient;
 
 void connectClient(WiFiClient *client) {
+  byte failures = 0;
   sendStatusMessage("Connecting to Redis server...");
-  if (! client->connect(REDIS_ADDR, REDIS_PORT)) {
-    fatalError("Connection FAILED to Redis server");
+  while (! client->connect(REDIS_ADDR, REDIS_PORT)) {
+    failures++;
+    if (failures < 3) {
+      sendStatusMessage("Connection failed to Redis server. Retrying...");
+    } else {
+      fatalError("Connection FAILED to Redis server.");
+    }
   }
 
   client->setTimeout(REDIS_TIMEOUT);

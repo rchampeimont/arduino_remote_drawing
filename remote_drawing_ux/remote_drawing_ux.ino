@@ -111,6 +111,9 @@ void handleReceive() {
           break;
         case SERIAL_COM_MSG_OPCODE:
           printStatus(statusMessage);
+          // Initial Redis connection can take long,
+          // so consider status messages as proof of alive.
+          aliveReceived();
           break;
         case SERIAL_COM_CLEAR_OPCODE:
           clearDisplayedDrawing();
