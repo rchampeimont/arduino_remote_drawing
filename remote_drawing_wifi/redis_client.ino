@@ -38,6 +38,8 @@ void connectClient(WiFiClient *client) {
   while (! client->connect(REDIS_ADDR, REDIS_PORT)) {
     failures++;
     if (failures < 3) {
+      // Initial connection to Redis often fails (like 1 every 10 times),
+      // so retry a few times.
       sendStatusMessage("Connection failed to Redis server. Retrying...");
     } else {
       fatalError("Connection FAILED to Redis server.");
