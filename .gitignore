@@ -36,3 +36,6 @@ secrets.h
 
 # MacOS stuff
 .DS_Store
+
+# SketchUp backup files
+*.skb
