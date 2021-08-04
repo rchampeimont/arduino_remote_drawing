@@ -1,6 +1,8 @@
 # arduino_remote_drawing
 An Arduino-based system to synchronize drawings on two remote touchscreens through a Redis server.
 
+Project demo on YouTube: https://www.youtube.com/watch?v=fHJE1c8BRzo
+
 ![Photo of what the project looks like](/images/overview.jpg?raw=true)
 
 Here is the general overview of the whole system:
