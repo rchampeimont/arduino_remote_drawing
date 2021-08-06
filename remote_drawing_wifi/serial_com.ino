@@ -13,10 +13,12 @@ void serialInit() {
   Serial.print(sizeof(SentPacket));
   Serial.println(" bytes.");
 
-  sendStatusMessageFormat("Hello received from Wifi Arduino. I am client %d.", myClientId);
+  sendStatusMessageFormat("Hello received from Wifi Arduino: Client %d / Version " VERSION, myClientId);
 
   // Clear any remaining displayed drawing from previous run.
   serialTransmitClear();
+
+  delay(2000);
 }
 
 void sendStatusMessage(const char *msg) {

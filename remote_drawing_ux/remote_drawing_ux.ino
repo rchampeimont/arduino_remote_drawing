@@ -68,7 +68,7 @@ void setup() {
 
   tft.fillScreen(RA8875_WHITE);
 
-  printStatus("Copyright (c) 2021 Raphael Champeimont");
+  printStatus("Copyright (c) 2021 Raphael Champeimont - UX version " VERSION);
 
   initToolbar();
   renderToolbar();

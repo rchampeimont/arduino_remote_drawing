@@ -1,6 +1,9 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+// Version of Wifi Arduino code
+#define VERSION "1.1"
+
 // Pin tied to the other ("UX") Arduino reset circuit
 #define PIN_TO_OTHER_ARDUINO_RESET_CIRCUIT 7
 
