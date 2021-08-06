@@ -24,7 +24,7 @@ byte actualBrightness = 0;
 byte getOptimalBacklightFromSensor() {
   if (lastUserTouchTime == 0 || millis() >= lastUserTouchTime + REDUCE_BRIGHTNESS_AFTER_MS) {
     int photosensorValue = analogRead(PHOTOTRANSISTOR_PIN);
-    return (byte) constrain(map(photosensorValue, 0, 900, 0, 255), 0, 255);
+    return (byte) constrain(map(photosensorValue, 0, 200, 0, 255), 0, 255);
   } else {
     // The user is drawing something, so keep full brightness to avoid PWM-related interferences
     return 255;
