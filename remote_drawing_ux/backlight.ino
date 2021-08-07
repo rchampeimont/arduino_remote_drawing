@@ -44,6 +44,8 @@ void initBacklight() {
 void setBrightness(byte value) {
   actualBrightness = value;
   tft.PWM1out(value);
+
+  //printStatusFormat("Brightness set to %d", value); // uncomment for debug
 }
 
 void updateBacklight() {
@@ -66,7 +68,9 @@ void updateBacklight() {
   // Avoid changing the brightness if the computed change is very small.
   // This is to avoid annoying flickering.
   if (newBrightnessAverage > actualBrightness + MINIMUM_BRIGHTNESS_CHANGE
-      || newBrightnessAverage < actualBrightness - MINIMUM_BRIGHTNESS_CHANGE) {
+      || newBrightnessAverage < actualBrightness - MINIMUM_BRIGHTNESS_CHANGE
+      || (newBrightnessAverage != actualBrightness
+          && (newBrightnessAverage == 0 || newBrightnessAverage == 255))) {
     setBrightness(newBrightnessAverage);
   }
 }

@@ -2,7 +2,7 @@
 #define SYSTEM_H
 
 // Version of UX Arduino code
-#define VERSION "1.3.5"
+#define VERSION "1.4"
 
 // Adafruit RA8875 connections:
 // Connect SCLK to ICSP SCK
