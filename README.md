@@ -3,8 +3,11 @@ An Arduino-based system to synchronize drawings on two remote touchscreens throu
 
 Project demo on YouTube: https://www.youtube.com/watch?v=fHJE1c8BRzo&list=PLyapHjQ6m2qxmw1AHN88vVNvwXfSJUXou
 
-In the photo below, you can see an unassembled station on the left and a fully assembled one in its 3D-printed case on the right.
-![Photo of what the project looks like](/images/overview_both.jpg?raw=true)
+Here is what the finished project looks like, with the two stations in their 3D-printed cases:
+![Photo of what the project looks like](/images/two_stations.jpg?raw=true)
+
+And here is what's inside:
+![Inside a station](/images/inside_with_screen.jpg?raw=true)
 
 Here is the general overview of the whole system:
 ![General diagram](/schematics/overview.jpg?raw=true)
