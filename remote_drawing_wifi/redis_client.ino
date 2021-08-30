@@ -101,11 +101,11 @@ int expectRedisInteger(WiFiClient *client, const char *command) {
   }
 }
 
-int expectRedisArrayCount(WiFiClient *client, const char *command) {
+long expectRedisArrayCount(WiFiClient *client, const char *command) {
   char buf[REDIS_RECEIVE_BUFFER_SIZE];
   redisReceive(client, buf, command);
   if (buf[0] == '*') {
-    return atoi(buf + 1);
+    return atol(buf + 1);
   } else {
     fatalError("Expected array count for %s but got: \"%s\"", command, buf);
     return 0; // never reached, as fatalError() never returns
@@ -229,11 +229,11 @@ int redisBatchRPUSH(const char *key, byte buf[], int elementSize, int numberOfEl
 // Execute the Redis LRANGE command.
 // Returns the number of elements in the array
 // You should then read them with redisReadArrayElement()
-int redisLRANGE(const char *key, int start, int stop) {
-  char startAsString[10];
-  char stopAsString[10];
-  snprintf(startAsString, 10, "%d", start);
-  snprintf(stopAsString, 10, "%d", stop);
+long redisLRANGE(const char *key, long start, long stop) {
+  char startAsString[12];
+  char stopAsString[12];
+  snprintf(startAsString, 12, "%ld", start);
+  snprintf(stopAsString, 12, "%ld", stop);
 
   mainClient.write("*4\r\n");
   mainClient.write("$6\r\n");
@@ -426,7 +426,7 @@ void redisPingSubClient() {
   }
 }
 
-int redisDownloadLinesBegin(int start, int stop) {
+long redisDownloadLinesBegin(long start, long stop) {
   return redisLRANGE(REDIS_LINES_KEY, start, stop);
 }
 

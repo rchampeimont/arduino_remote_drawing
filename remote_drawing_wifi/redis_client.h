@@ -39,7 +39,7 @@ void redisPlanClearDrawing();
 // Download the drawing lines in interval [start, stop].
 // Pass [0,-1] to get all lines.
 // Call redisDownloadLine() to then get each line
-int redisDownloadLinesBegin(int start, int stop);
+long redisDownloadLinesBegin(long start, long stop);
 
 // To call after redisDownloadLinesStart(),
 // as many times as the value redisDownloadLinesStart() returned.
