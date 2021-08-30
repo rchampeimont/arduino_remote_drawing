@@ -132,10 +132,10 @@ void handleRedisReceive() {
   }
 }
 
-void getLinesFromRedisAndDrawThem(int count) {
+void getLinesFromRedisAndDrawThem(long count) {
   Line line;
 
-  for (int i = 0; i < count; i++) {
+  for (long i = 0; i < count; i++) {
     // Receive line from Redis
     redisDownloadLine(&line);
     // Send line to UX Arduino to render it on screen
@@ -144,14 +144,14 @@ void getLinesFromRedisAndDrawThem(int count) {
 }
 
 void downloadInitialData() {
-  int count;
+  long count;
 
   sendStatusMessage("Downloading drawing from server...");
   count = redisDownloadLinesBegin(0, -1);
 
-  sendStatusMessageFormat("Downloading drawing from server (%d lines). Please wait...", count);
+  sendStatusMessageFormat("Downloading drawing from server (%ld lines). Please wait...", count);
   getLinesFromRedisAndDrawThem(count);
-  sendStatusMessageFormat("Downloaded %d lines. You can now draw!", count);
+  sendStatusMessageFormat("Downloaded %ld lines. You can now draw!", count);
 }
 
 void loop() {
