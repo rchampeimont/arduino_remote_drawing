@@ -7,8 +7,8 @@
 #define REDIS_CLEAR_OPCODE 'C'
 
 typedef struct {
-  int newLinesStartIndex;
-  int newLinesStopIndex;
+  long newLinesStartIndex;
+  long newLinesStopIndex;
 } RedisLinesInterval;
 
 // This union is trivial, but it clarifies that lineInterval is not always used
