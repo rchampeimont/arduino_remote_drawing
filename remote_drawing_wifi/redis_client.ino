@@ -90,11 +90,11 @@ void expectRedisResponse(WiFiClient *client, const char *command, const char *ex
   }
 }
 
-int expectRedisInteger(WiFiClient *client, const char *command) {
+long expectRedisInteger(WiFiClient *client, const char *command) {
   char buf[REDIS_RECEIVE_BUFFER_SIZE];
   redisReceive(client, buf, command);
   if (buf[0] == ':') {
-    return atoi(buf + 1);
+    return atol(buf + 1);
   } else {
     fatalError("Expected integer for %s but got: \"%s\"", command, buf);
     return 0; // never reached, as fatalError() never returns
@@ -199,7 +199,7 @@ int redisReceiveMessage(RedisMessage *redisMessage) {
 }
 
 // Execute the Redis DEL command
-int redisDEL(const char *key) {
+long redisDEL(const char *key) {
   mainClient.write("*2\r\n");
   mainClient.write("$3\r\n");
   mainClient.write("DEL\r\n");
@@ -209,7 +209,7 @@ int redisDEL(const char *key) {
   return expectRedisInteger(&mainClient, "DEL");
 }
 
-int redisBatchRPUSH(const char *key, byte buf[], int elementSize, int numberOfElements) {
+long redisBatchRPUSH(const char *key, byte buf[], int elementSize, int numberOfElements) {
   mainClient.write("*"); mainClient.print(2 + numberOfElements); mainClient.write("\r\n");
   // Send command
   mainClient.write("$5\r\n");
@@ -318,7 +318,7 @@ void sendLinesInBuffer() {
   Serial.print(*linesInBufferAddress);
   Serial.println(" lines)...");
   unsigned long start = millis();
-  int newSize = redisBatchRPUSH(
+  long newSize = redisBatchRPUSH(
                   REDIS_LINES_KEY,
                   (byte *) bufferToRead,
                   sizeof(Line),
@@ -329,8 +329,8 @@ void sendLinesInBuffer() {
   Serial.println(" ms).");
 
   // Compute the array index interval on the server where we just wrote our data
-  int newLinesStartIndex = newSize - *linesInBufferAddress;
-  int newLinesStopIndex = newSize - 1;
+  long newLinesStartIndex = newSize - *linesInBufferAddress;
+  long newLinesStopIndex = newSize - 1;
 
   // Now tell the other client where the new data we addded is
   RedisMessage redisMessage;
