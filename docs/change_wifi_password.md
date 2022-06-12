@@ -1,5 +1,5 @@
 # How to change my Wifi password?
-If you Wifi password has changed, the remote drawer will not work any more and will display an error saying it failed to connect to Wifi
+If your Wifi password has changed, the remote drawer will not work any more and will display an error saying it failed to connect to Wifi
 (FATAL: Connection to Wifi network "[you Wifi name]" failed).
 
 To upload the new Wifi password, first disconnect your remote drawer from the power supply,
