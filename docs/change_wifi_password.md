@@ -10,7 +10,7 @@ and connect the USB port which is on the Wifi Arduino to the computer you used t
 Open the Arduino application and open the secrets.h file which you created during the initial setup.
 
 If you don't have it any more, you need to do again the initial setup as explained in
-https://github.com/raphaelchampeimont/arduino_remote_drawing/blob/main/README.md#wifi-arduino-for-arduino-uno-wifi-rev2
+[the general README](../README.md#wifi-arduino-for-arduino-uno-wifi-rev2)
 with both the Wifi credentials and the Redis server credentials.
 
 You still have the secrets.h file, you just need to change the WIFI_PASSWORD variable
