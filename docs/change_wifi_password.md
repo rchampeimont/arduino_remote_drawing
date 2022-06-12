@@ -7,7 +7,7 @@ and connect the USB port which is on the Wifi Arduino to the computer you used t
 
 ![How to connect the Remote Drawer to the computer to change the Wifi password](change_wifi_password.jpg?raw=true)
 
-Open the Arduino application and open the secrets.h file which you created during the initial setup.
+Open the Arduino application and open the `secrets.h` file which you created during the initial setup.
 
 If you don't have it any more, you need to do again the initial setup as explained in
 [the general README](../README.md#wifi-arduino-for-arduino-uno-wifi-rev2)
