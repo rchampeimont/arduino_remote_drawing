@@ -55,3 +55,6 @@ Why use this complex circuit and not simply connect an output pin of one Arduino
 
 Here is what the circuit behavior look like when a reset on one Arduino is triggered by the other:
 ![Pin 7 and RESET pin measures on an oscilloscope](/benchmarks/reboot%20system/20210622_190719.jpg?raw=true)
+
+## If your Wifi password has changed
+Here is a [documentation](docs/change_wifi_password.md) to follow if you need to change your Wifi password.
