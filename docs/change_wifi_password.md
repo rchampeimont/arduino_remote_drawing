@@ -23,4 +23,4 @@ Set the port and Arduino hardware correctly:
 
 Click "upload". The remote drawer should restart and then work properly.
 
-You can then upload the USB cable from the remote drawer and connect it back to the power supply.
+You can then disconnect the USB cable from the remote drawer and connect back the power supply.
