@@ -13,7 +13,7 @@ If you don't have it any more, you need to do again the initial setup as explain
 [the general README](../README.md#wifi-arduino-for-arduino-uno-wifi-rev2)
 with both the Wifi credentials and the Redis server credentials.
 
-If you still have the secrets.h file, you just need to change the WIFI_PASSWORD variable
+If you still have the `secrets.h` file, you just need to change the WIFI_PASSWORD variable
 (and WIFI_NAME if your Wifi does not have the same name any more).
 
 Set the port and Arduino hardware correctly:
