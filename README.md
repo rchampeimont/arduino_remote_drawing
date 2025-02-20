@@ -4,12 +4,19 @@ An Arduino-based system to synchronize drawings on two remote touchscreens throu
 Project demo on YouTube: https://www.youtube.com/watch?v=fHJE1c8BRzo&list=PLyapHjQ6m2qxmw1AHN88vVNvwXfSJUXou
 
 Here is what the finished project looks like, with the two stations in their 3D-printed cases:
+
 ![Photo of what the project looks like](/images/two_stations.jpg?raw=true)
 
+Here is an example of drawing a more complex image:
+
+![Pridge flag drawn on device](/images/pride_flag.jpg?raw=true)
+
 And here is what's inside:
+
 ![Inside a station](/images/inside_with_screen.jpg?raw=true)
 
 Here is the general overview of the whole system:
+
 ![General diagram](/schematics/overview.jpg?raw=true)
 
 Each station is made of the following hardware (so you need all this twice):
@@ -23,6 +30,7 @@ Each station is made of the following hardware (so you need all this twice):
 As you can see in the diagram above, you also need a Redis server that can be accessed by the two stations. Here we use Redis to store the drawing and to create a pub/sub channel so that each station gets changes in real-time (a few seconds). So you need to have a Linux server running around the clock for the project to work. But if you already have one, adding a Redis server is very simple (you just need to set port number and password) and will require very little resources (Redis uses only a few megabytes of RAM). Learn more about Redis here: https://redis.io/
 
 Here is the complete schematic for one station:
+
 ![Complete schematic](/schematics/complete_schematic.png?raw=true)
 
 ## "Wifi" Arduino (for Arduino Uno Wifi Rev2)
@@ -43,6 +51,7 @@ Here are some benchmarks showing that this is indeed the most efficient configur
 
 ## More details on the "reset circuit"
 As you can see in the schematic above, this circuit is present twice:
+
 ![Reset circuit](/schematics/reset_circuit.jpg?raw=true)
 It allows each Arduino (Arduino 1 above) to reset the other Arduino (Arduino 2 above). The optional part with an LED is if you want to see when a reset is triggered (LED will be on for 1/2 second).
 
